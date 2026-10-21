@@ -1,0 +1,43 @@
+<!--page key=visite title=nav.tour desc=tour.sub-->
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow" data-i18n="tour.eyebrow"></p>
+    <h1 data-i18n="tour.title"></h1>
+    <p class="pagehead-sub" data-i18n="tour.sub"></p>
+  </div>
+</section>
+
+  <!-- VISITE VIRTUELLE -->
+  <section class="section tour" id="visite">
+    <div class="wrap">
+      <div class="tour-app">
+        <div class="tour-side">
+          <div class="chips zones" id="tourZones" role="group"></div>
+          <p class="tour-hint" data-i18n="tour.hint"></p>
+          <div class="rooms" id="tourRooms"></div>
+        </div>
+        <div class="tour-stage">
+          <div class="phone">
+            <div class="player" id="player">
+              <div class="player-poster" id="posterBg"></div>
+              <button class="play" id="playBtn" aria-label="Lancer la visite">
+                <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path fill="currentColor" d="M8 5.500v13l11-6.500z"/></svg>
+              </button>
+              <p class="player-msg" id="playerMsg"></p>
+              <div class="yt-host" id="ytHost"></div>
+            </div>
+          </div>
+          <div class="timeline" id="tourTimeline" role="group" aria-label="Chapitres"></div>
+          <div class="now" id="tourNow" aria-live="polite"><span class="now-label" data-i18n="tour.now">En ce moment</span><b id="nowName"></b><span id="nowDesc"></span></div>
+          <div class="tour-nav">
+            <button type="button" class="btn btn-ghost btn-sm" id="tourPrev" data-i18n="tour.prev">Pièce précédente</button>
+            <button type="button" class="btn btn-primary btn-sm" id="tourNext" data-i18n="tour.next">Pièce suivante</button>
+          </div>
+          <p class="links"><a id="ytChannel" target="_blank" rel="noopener" data-i18n="tour.channel">Chaîne YouTube</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  {{CTA}}

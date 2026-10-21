@@ -62,11 +62,11 @@
   function answer(id) {
     var contactVars = { mail: C.contact.email, phone: C.contact.phone ? " / " + C.contact.phone : "" };
     var acts = [];
-    if (id === "rates") acts = [{ label: A.t("nav.rates"), href: "#tarifs", close: true }, { label: A.t("chat.bookBtn"), href: "#reserver", close: true }];
-    else if (id === "book" || id === "min") acts = [{ label: A.t("chat.bookBtn"), href: "#reserver", close: true }];
-    else if (id === "pool" || id === "cap") acts = [{ label: A.t("nav.gallery"), href: "#photos", close: true }];
+    if (id === "rates") acts = [{ label: A.t("nav.rates"), href: "tarifs.html", close: true }, { label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
+    else if (id === "book" || id === "min") acts = [{ label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
+    else if (id === "pool" || id === "cap") acts = [{ label: A.t("nav.gallery"), href: "photos.html", close: true }];
     else if (id === "contact") acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
-    else if (id === "where") acts = [{ label: A.t("nav.contact"), href: "#contact", close: true }];
+    else if (id === "where") acts = [{ label: A.t("nav.contact"), href: "contact.html", close: true }];
     var txt = id === "contact" ? A.t("chat.a.contact", contactVars) : A.t("chat.a." + id);
     bubble(txt, "bot", acts.length ? actions(acts) : null);
   }

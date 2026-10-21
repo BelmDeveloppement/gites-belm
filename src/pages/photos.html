@@ -1,0 +1,31 @@
+<!--page key=photos title=nav.gallery desc=gallery.sub-->
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow" data-i18n="nav.gallery"></p>
+    <h1 data-i18n="gallery.title"></h1>
+    <p class="pagehead-sub" data-i18n="gallery.sub"></p>
+  </div>
+</section>
+
+  <!-- GALERIES -->
+  <section class="section alt" id="photos">
+    <div class="wrap">
+      <div class="tabs" role="tablist" id="galTabs">
+        <button role="tab" class="tab is-on" data-site="fresse" aria-selected="true" data-i18n="tab.fresse"></button>
+        <button role="tab" class="tab" data-site="bresse" aria-selected="false" data-i18n="tab.bresse"></button>
+      </div>
+      <div class="chips" id="galChips" role="group"></div>
+      <div class="gallery" id="gallery" aria-live="polite"></div>
+    </div>
+  </section>
+
+
+  {{CTA}}
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" hidden>
+  <button class="lb-btn lb-close" id="lbClose" data-i18n-attr="aria-label:lb.close" aria-label="Fermer">✕</button>
+  <button class="lb-btn lb-prev" id="lbPrev" data-i18n-attr="aria-label:lb.prev" aria-label="Précédente">‹</button>
+  <figure class="lb-fig"><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
+  <button class="lb-btn lb-next" id="lbNext" data-i18n-attr="aria-label:lb.next" aria-label="Suivante">›</button>
+</div>

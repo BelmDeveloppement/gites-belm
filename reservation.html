@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disponibilités — Gîtes BEL&#x27;M</title>
+  <meta name="description" content="Choisissez votre chalet, vos dates et le nombre de voyageurs : nous calculons une estimation et vous confirmons la disponibilité sous 24 h." data-i18n-attr="content:book.sub">
+  <meta name="theme-color" content="#24402f">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gîtes BEL'M">
+  <meta property="og:title" content="Disponibilités — Gîtes BEL&#x27;M">
+  <meta property="og:image" content="https://storage.e.jimdo.com/cdn-cgi/image/quality=85,fit=crop,format=auto,width=1200,height=630/image/549400820/67a64fb2-6028-44b5-a8e5-839923e6333c.jpg">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2324402f'/%3E%3Cpath d='M8 46 24 22l9 13 7-9 16 20z' fill='%23f3e9d6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"LodgingBusiness","name":"Gîtes BEL'M",
+   "address":[{"@type":"PostalAddress","streetAddress":"71 route du Brabant","postalCode":"88250","addressLocality":"La Bresse","addressCountry":"FR"},
+              {"@type":"PostalAddress","streetAddress":"6 chemin du Frenat","postalCode":"88160","addressLocality":"Fresse-sur-Moselle","addressCountry":"FR"}],
+   "sameAs":["https://www.facebook.com/107251145336952","https://www.youtube.com/@GitesBelM"]}
+  </script>
+</head>
+<body data-page="reservation" data-title="nav.avail">
+<a class="skip" href="#main" data-i18n="skip">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="wrap bar">
+    <a class="brand" href="index.html" aria-label="Gîtes BEL'M">
+      <svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><rect width="64" height="64" rx="14" fill="currentColor"/><path d="M8 46 24 22l9 13 7-9 16 20z" fill="var(--cream)"/></svg>
+      <span>Gîtes <b>BEL'M</b></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Menu principal">
+      <a href="chalets.html" data-nav="chalets" data-i18n="nav.places">Nos chalets</a>
+      <a href="photos.html" data-nav="photos" data-i18n="nav.gallery">Photos</a>
+      <a href="visite.html" data-nav="visite" data-i18n="nav.tour">Visite virtuelle</a>
+      <a href="tarifs.html" data-nav="tarifs" data-i18n="nav.rates">Tarifs</a>
+      <a href="reservation.html" data-nav="reservation" aria-current="page" data-i18n="nav.avail">Disponibilités</a>
+      <a href="contact.html" data-nav="contact" data-i18n="nav.contact">Contact</a>
+    </nav>
+    <div class="actions">
+      <label class="lang" title="Langue / Language">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 0c2.5 2.4 3.8 5.4 3.8 9S14.500 18.600 12 21c-2.500-2.400-3.800-5.400-3.800-9S9.500 5.400 12 3ZM3.500 9h17M3.500 15h17"/></svg>
+        <span class="sr" data-i18n="nav.lang">Langue</span>
+        <select id="langSelect" aria-label="Langue / Language">
+          <option value="fr">Français</option><option value="en">English</option>
+          <option value="de">Deutsch</option><option value="nl">Nederlands</option>
+        </select>
+      </label>
+      <a class="btn btn-primary btn-sm" href="reservation.html" data-i18n="nav.book">Réserver</a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+
+<main id="main">
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow" data-i18n="book.eyebrow">Réservation</p>
+    <h1 data-i18n="book.title">Demandez votre séjour en quelques clics</h1>
+    <p class="pagehead-sub" data-i18n="book.sub">Choisissez votre chalet, vos dates et le nombre de voyageurs : nous calculons une estimation et vous confirmons la disponibilité sous 24 h.</p>
+  </div>
+</section>
+
+  <!-- RESERVATION -->
+  <section class="section book" id="reserver">
+    <div class="wrap">
+      <div class="gcal" id="gcal" hidden>
+        <div class="tabs gcal-tabs" id="gcalTabs" role="tablist"></div>
+        <div class="gcal-frame" id="gcalFrame">
+          <p class="gcal-info" id="gcalInfo"></p>
+          <button type="button" class="btn btn-primary" id="gcalLoad"></button>
+          <p class="small gcal-consent" data-i18n="gcal.consent">Le calendrier se charge depuis Google uniquement après votre clic.</p>
+        </div>
+      </div>
+      <form class="book-grid" id="bookForm" novalidate>
+        <div class="book-main">
+          <fieldset class="step">
+            <legend data-i18n="book.step1">1. Le chalet</legend>
+            <div class="seg" role="radiogroup" aria-label="Lieu">
+              <label><input type="radio" name="site" value="fresse" checked><span data-i18n="rates.fresse">Fresse-sur-Moselle</span></label>
+              <label><input type="radio" name="site" value="bresse"><span data-i18n="rates.bresse">La Bresse</span></label>
+            </div>
+            <div id="unitsBox" class="unitsbox" hidden>
+              <p class="lbl" data-i18n="book.units">Logement(s) à La Bresse</p>
+              <div class="unit-pick">
+                <label class="chk"><input type="checkbox" name="unit" value="m1"><span><b data-i18n="u.m1">BEL'M 1</b><i>2–4</i></span></label>
+                <label class="chk"><input type="checkbox" name="unit" value="m2"><span><b data-i18n="u.m2">BEL'M 2</b><i>2–4</i></span></label>
+                <label class="chk"><input type="checkbox" name="unit" value="m3"><span><b data-i18n="u.m3">BEL'M 3</b><i>6</i></span></label>
+                <label class="chk"><input type="checkbox" name="unit" value="m4"><span><b data-i18n="u.m4">BEL'M 4</b><i>7</i></span></label>
+              </div>
+              <button type="button" class="linkbtn" id="allUnits" data-i18n="book.u.entire">Chalet entier (4 logements)</button>
+            </div>
+            <label class="field narrow"><span data-i18n="book.guests">Voyageurs</span>
+              <input type="number" id="guests" name="guests" min="1" max="15" value="2" inputmode="numeric"></label>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend data-i18n="book.step2">2. Les dates</legend>
+            <p class="hint" data-i18n="book.cal.hint">Cliquez sur la date d'arrivée puis sur la date de départ.</p>
+            <div class="cal" id="cal" aria-label="Calendrier"></div>
+            <ul class="legend">
+              <li><i class="lg free"></i><span data-i18n="book.cal.free">Libre</span></li>
+              <li><i class="lg busy"></i><span data-i18n="book.cal.busy">Indisponible</span></li>
+              <li><i class="lg sel"></i><span data-i18n="book.cal.sel">Votre séjour</span></li>
+            </ul>
+            <div class="dates-out">
+              <div><span data-i18n="book.arrive">Arrivée</span><b id="outIn">—</b></div>
+              <div><span data-i18n="book.depart">Départ</span><b id="outOut">—</b></div>
+              <button type="button" class="linkbtn" id="clearDates" data-i18n="book.clear">Effacer les dates</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend data-i18n="book.step3">3. Vos coordonnées</legend>
+            <div class="fields">
+              <label class="field"><span data-i18n="book.name">Nom et prénom</span><input name="name" autocomplete="name" required></label>
+              <label class="field"><span data-i18n="book.email">E-mail</span><input name="email" type="email" autocomplete="email" required></label>
+              <label class="field"><span data-i18n="book.phone">Téléphone (facultatif)</span><input name="phone" type="tel" autocomplete="tel"></label>
+            </div>
+            <p class="lbl" data-i18n="book.opts">Options souhaitées</p>
+            <div class="optpick">
+              <label class="chk sm"><input type="checkbox" name="opt" value="sauna"><span data-i18n="o.sauna">Sauna extérieur (La Bresse) : 10 € / heure</span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="bike"><span data-i18n="o.bike">VTT électriques : 25 € le 1er jour, 10 € / jour suivant</span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="sled"><span data-i18n="o.sled">Luges : 6 € le 1er jour, 3 € / jour suivant</span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="snow"><span data-i18n="o.snow">Raquettes (bâtons fournis) : 10 € le 1er jour, 5 € / jour suivant</span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="bbq"><span data-i18n="o.bbq">Sac de charbon de bois + allume-feux : 10 €</span></label>
+            </div>
+            <label class="field"><span data-i18n="book.msg">Message (facultatif)</span><textarea name="message" rows="3"></textarea></label>
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+          </fieldset>
+        </div>
+
+        <aside class="estimate" aria-live="polite">
+          <h3 data-i18n="book.est.title">Estimation de votre séjour</h3>
+          <div id="estBody"><p class="muted" data-i18n="book.est.empty">Sélectionnez vos dates pour voir l'estimation.</p></div>
+          <p class="error" id="formErr" role="alert" hidden></p>
+          <button class="btn btn-primary btn-block" type="submit" id="sendBtn" data-i18n="book.send">Envoyer ma demande</button>
+          <p class="ok" id="formOk" role="status" hidden></p>
+          <p class="small light-note"><span data-i18n="book.direct">Réservez en direct pour bénéficier des tarifs préférentiels. Vous préférez Airbnb ?</span> <a id="airbnbLink" target="_blank" rel="noopener" data-i18n="book.airbnb">Voir sur Airbnb</a></p>
+        </aside>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- SEJOUR + OU NOUS TROUVER -->
+  <section class="section alt" id="sejour">
+    <div class="wrap">
+      <header class="sec-head"><h2 data-i18n="stay.title">Votre séjour</h2></header>
+      <div class="cards3">
+        <div class="mini"><h3 data-i18n="stay.arrival">Arrivée</h3><p data-i18n="stay.arrivalT">Arrivée possible en autonomie à La Bresse. À Fresse, la conciergerie vous contacte pour le check-in. Arrivée à partir de 17 h ; plus tôt possible avec supplément si le gîte est libre (confirmé la veille au soir).</p></div>
+        <div class="mini"><h3 data-i18n="stay.during">Pendant le séjour</h3><p data-i18n="stay.duringT">Randonnée, ski, parapente, gyropode, VTT, lac des Corbeaux, La Bresse, Gérardmer, Bussang, Ballon d'Alsace, fermes-auberges…</p></div>
+        <div class="mini"><h3 data-i18n="stay.departure">Départ</h3><p data-i18n="stay.departureT">Départ possible en autonomie à 10 h, adaptable selon les contraintes ; un départ plus tardif est possible avec supplément.</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap foot">
+    <span>© <span id="year"></span> Gîtes BEL'M — <span data-i18n="foot.rights">Tous droits réservés.</span></span>
+    <span class="flinks">
+      <a id="lgMentions" target="_blank" rel="noopener" data-i18n="foot.legal">Mentions légales</a>
+      <a id="lgPrivacy" target="_blank" rel="noopener" data-i18n="foot.privacy">Politique de confidentialité</a>
+      <a id="lgWithdraw" target="_blank" rel="noopener" data-i18n="foot.withdrawal">Rétractation du contrat</a>
+    </span>
+  </div>
+</footer>
+
+
+<!-- CHATBOT -->
+<div class="chat" id="chat">
+  <button class="chat-fab" id="chatFab" aria-expanded="false" aria-controls="chatPanel" data-i18n-attr="aria-label:chat.open" aria-label="Ouvrir l&#x27;assistant">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+  </button>
+  <section class="chat-panel" id="chatPanel" role="dialog" aria-label="Assistant" hidden>
+    <header><b data-i18n="chat.title">Assistant BEL'M</b><button id="chatClose" aria-label="Fermer l&#x27;assistant" data-i18n-attr="aria-label:chat.close">✕</button></header>
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+    <div class="chat-quick" id="chatQuick"></div>
+    <form class="chat-form" id="chatForm" autocomplete="off">
+      <input id="chatInput" type="text" data-i18n-attr="placeholder:chat.placeholder" placeholder="Posez votre question…" aria-label="Message">
+      <button type="submit" data-i18n-attr="aria-label:chat.send" aria-label="Envoyer">➤</button>
+    </form>
+  </section>
+</div>
+
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/chatbot.js"></script>
+</body>
+</html>

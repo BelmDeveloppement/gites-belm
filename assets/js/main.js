@@ -29,7 +29,8 @@
 
   function applyI18n() {
     document.documentElement.lang = lang;
-    document.title = t("meta.title");
+    var tk = document.body.getAttribute("data-title");
+    document.title = (!tk || tk === "meta.title") ? t("meta.title") : t(tk) + " — Gîtes BEL'M";
     $$("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
     $$("[data-i18n-attr]").forEach(function (el) {
       el.getAttribute("data-i18n-attr").split(";").forEach(function (pair) {
@@ -58,50 +59,39 @@
   /* ------------------------------------------------------------------ */
   function initStatic() {
     var burger = $("#burger"), nav = $("#nav");
-    burger.addEventListener("click", function () {
-      var open = nav.classList.toggle("is-open");
-      burger.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-    $$("a", nav).forEach(function (a) { a.addEventListener("click", function () { nav.classList.remove("is-open"); burger.setAttribute("aria-expanded", "false"); }); });
+    if (burger && nav) {
+      burger.addEventListener("click", function () {
+        var open = nav.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      $$("a", nav).forEach(function (a) { a.addEventListener("click", function () { nav.classList.remove("is-open"); burger.setAttribute("aria-expanded", "false"); }); });
+    }
 
     var hdr = $(".site-header");
     var onScroll = function () { hdr.classList.toggle("is-stuck", window.scrollY > 24); };
     window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
-    $("#heroBg").style.backgroundImage = "url(" + C.hero.home + ")";
-    $("#imgFresse").style.backgroundImage = "url(" + C.hero.fresse + ")";
-    $("#imgBresse").style.backgroundImage = "url(" + C.hero.bresse + ")";
-    $("#posterBg").style.backgroundImage = "url(" + C.hero.fresse + ")";
+    var bg = function (sel, url) { var e = $(sel); if (e) e.style.backgroundImage = "url(" + url + "), linear-gradient(135deg, #4d6b4f, #24402f)"; };
+    var href = function (sel, url) { var e = $(sel); if (e) e.href = url; };
+    var text = function (sel, v) { var e = $(sel); if (e) e.textContent = v; };
+    bg("#heroBg", C.hero.home); bg("#imgFresse", C.hero.fresse); bg("#imgBresse", C.hero.bresse); bg("#posterBg", C.hero.fresse);
 
-    $("#rvFresseAir").href = C.reviews.fresse.airbnb; $("#rvFresseGoo").href = C.reviews.fresse.google;
-    $("#rvBresseAir").href = C.reviews.bresse.airbnb; $("#rvBresseGoo").href = C.reviews.bresse.google;
+    href("#rvFresseAir", C.reviews.fresse.airbnb); href("#rvFresseGoo", C.reviews.fresse.google);
+    href("#rvBresseAir", C.reviews.bresse.airbnb); href("#rvBresseGoo", C.reviews.bresse.google);
 
-    var mail = $("#mailLink"); mail.href = "mailto:" + C.contact.email; mail.textContent = C.contact.email;
-    if (C.contact.phone) {
+    var mail = $("#mailLink"); if (mail) { mail.href = "mailto:" + C.contact.email; mail.textContent = C.contact.email; }
+    if (C.contact.phone && $("#phoneLine")) {
       $("#phoneLine").hidden = false;
       var p = $("#phoneLink"); p.href = "tel:" + C.contact.phone.replace(/\s+/g, ""); p.textContent = C.contact.phone;
     }
-    $("#fbLink").href = C.contact.facebook; $("#ytLink").href = C.contact.youtubeChannel; $("#ytChannel").href = C.contact.youtubeChannel;
-    $("#addrBresse").textContent = C.contact.addresses.bresse; $("#addrFresse").textContent = C.contact.addresses.fresse;
+    href("#fbLink", C.contact.facebook); href("#ytLink", C.contact.youtubeChannel); href("#ytChannel", C.contact.youtubeChannel);
+    text("#addrBresse", C.contact.addresses.bresse); text("#addrFresse", C.contact.addresses.fresse);
     var map = function (a) { return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(a); };
-    $("#mapBresse").href = map(C.contact.addresses.bresse); $("#mapFresse").href = map(C.contact.addresses.fresse);
-    $("#lgMentions").href = C.legal.mentions; $("#lgPrivacy").href = C.legal.privacy; $("#lgWithdraw").href = C.legal.withdrawal;
-    $("#year").textContent = new Date().getFullYear();
+    href("#mapBresse", map(C.contact.addresses.bresse)); href("#mapFresse", map(C.contact.addresses.fresse));
+    href("#lgMentions", C.legal.mentions); href("#lgPrivacy", C.legal.privacy); href("#lgWithdraw", C.legal.withdrawal);
+    text("#year", new Date().getFullYear());
 
     $("#langSelect").addEventListener("change", function (e) { setLang(e.target.value, true); });
-
-    $$("[data-book]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var r = $('input[name="site"][value="' + b.getAttribute("data-book") + '"]'); if (r) { r.checked = true; onSiteChange(); }
-        $("#reserver").scrollIntoView({ behavior: "smooth" });
-      });
-    });
-    $$("[data-open-gallery]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        setGallerySite(b.getAttribute("data-open-gallery"));
-        $("#photos").scrollIntoView({ behavior: "smooth" });
-      });
-    });
   }
 
   /* ------------------------------------------------------------------ */
@@ -141,7 +131,7 @@
   function renderGalleryChips() {
     var list = C.photos[gal.site] || [], present = {};
     list.forEach(function (p) { present[p.cat] = true; });
-    var box = $("#galChips"); box.innerHTML = "";
+    var box = $("#galChips"); if (!box) return; box.innerHTML = "";
     CATS.forEach(function (c) {
       if (c !== "all" && !present[c]) return;
       var b = document.createElement("button");
@@ -152,7 +142,7 @@
   }
 
   function renderGallery() {
-    var box = $("#gallery"); box.innerHTML = "";
+    var box = $("#gallery"); if (!box) return; box.innerHTML = "";
     var list = (C.photos[gal.site] || []).filter(function (p) { return gal.cat === "all" || p.cat === gal.cat; });
     gal.items = [];
     list.forEach(function (p, i) {
@@ -192,6 +182,7 @@
   function closeLb() { $("#lightbox").hidden = true; document.body.classList.remove("no-scroll"); $("#lbImg").src = ""; }
 
   function initGallery() {
+    if (!$("#gallery")) return;
     $$("#galTabs .tab").forEach(function (b) { b.addEventListener("click", function () { setGallerySite(b.getAttribute("data-site")); }); });
     $("#lbClose").addEventListener("click", closeLb);
     $("#lbPrev").addEventListener("click", function () { stepLb(-1); });
@@ -331,6 +322,7 @@
   }
 
   function initTour() {
+    if (!$("#player")) return;
     if (C.videoPoster) $("#posterBg").style.backgroundImage = "url(" + C.videoPoster + ")";
     $("#playBtn").addEventListener("click", function () { playAt(0); });
     $("#posterBg").addEventListener("click", function () { playAt(0); });
@@ -614,6 +606,7 @@
   }
 
   function initBooking() {
+    if (!$("#bookForm")) return;
     $$('input[name="site"]').forEach(function (r) { r.addEventListener("change", onSiteChange); });
     $$('input[name="unit"]').forEach(function (c) { c.addEventListener("change", onUnitsChange); });
     $("#allUnits").addEventListener("click", function () { B.units = UNIT_KEYS.slice(); syncUnitBoxes(); onUnitsChange(); });
@@ -629,8 +622,11 @@
   document.addEventListener("DOMContentLoaded", function () {
     initStatic(); initGallery(); initTour(); initGcal(); initBooking();
     lang = detectLang();
+    var qs = new URLSearchParams(location.search), wanted = qs.get("site");
+    var site = (wanted === "bresse" || wanted === "fresse") ? wanted : "fresse";
+    if ($("#bookForm")) { var r = $('input[name="site"][value="' + site + '"]'); if (r) r.checked = true; }
     setLang(lang, false);
-    setGallerySite("fresse");
-    onSiteChange();
+    if ($("#gallery")) setGallerySite(site);
+    if ($("#bookForm")) onSiteChange();
   });
 })();

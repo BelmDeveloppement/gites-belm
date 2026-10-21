@@ -1,0 +1,102 @@
+<!--page key=reservation title=nav.avail desc=book.sub-->
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow" data-i18n="book.eyebrow"></p>
+    <h1 data-i18n="book.title"></h1>
+    <p class="pagehead-sub" data-i18n="book.sub"></p>
+  </div>
+</section>
+
+  <!-- RESERVATION -->
+  <section class="section book" id="reserver">
+    <div class="wrap">
+      <div class="gcal" id="gcal" hidden>
+        <div class="tabs gcal-tabs" id="gcalTabs" role="tablist"></div>
+        <div class="gcal-frame" id="gcalFrame">
+          <p class="gcal-info" id="gcalInfo"></p>
+          <button type="button" class="btn btn-primary" id="gcalLoad"></button>
+          <p class="small gcal-consent" data-i18n="gcal.consent"></p>
+        </div>
+      </div>
+      <form class="book-grid" id="bookForm" novalidate>
+        <div class="book-main">
+          <fieldset class="step">
+            <legend data-i18n="book.step1">1. Le chalet</legend>
+            <div class="seg" role="radiogroup" aria-label="Lieu">
+              <label><input type="radio" name="site" value="fresse" checked><span data-i18n="rates.fresse">Fresse-sur-Moselle</span></label>
+              <label><input type="radio" name="site" value="bresse"><span data-i18n="rates.bresse">La Bresse</span></label>
+            </div>
+            <div id="unitsBox" class="unitsbox" hidden>
+              <p class="lbl" data-i18n="book.units">Logement(s) à La Bresse</p>
+              <div class="unit-pick">
+                <label class="chk"><input type="checkbox" name="unit" value="m1"><span><b data-i18n="u.m1">BEL'M 1</b><i>2–4</i></span></label>
+                <label class="chk"><input type="checkbox" name="unit" value="m2"><span><b data-i18n="u.m2">BEL'M 2</b><i>2–4</i></span></label>
+                <label class="chk"><input type="checkbox" name="unit" value="m3"><span><b data-i18n="u.m3">BEL'M 3</b><i>6</i></span></label>
+                <label class="chk"><input type="checkbox" name="unit" value="m4"><span><b data-i18n="u.m4">BEL'M 4</b><i>7</i></span></label>
+              </div>
+              <button type="button" class="linkbtn" id="allUnits" data-i18n="book.u.entire">Chalet entier</button>
+            </div>
+            <label class="field narrow"><span data-i18n="book.guests">Voyageurs</span>
+              <input type="number" id="guests" name="guests" min="1" max="15" value="2" inputmode="numeric"></label>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend data-i18n="book.step2">2. Les dates</legend>
+            <p class="hint" data-i18n="book.cal.hint"></p>
+            <div class="cal" id="cal" aria-label="Calendrier"></div>
+            <ul class="legend">
+              <li><i class="lg free"></i><span data-i18n="book.cal.free">Libre</span></li>
+              <li><i class="lg busy"></i><span data-i18n="book.cal.busy">Indisponible</span></li>
+              <li><i class="lg sel"></i><span data-i18n="book.cal.sel">Votre séjour</span></li>
+            </ul>
+            <div class="dates-out">
+              <div><span data-i18n="book.arrive">Arrivée</span><b id="outIn">—</b></div>
+              <div><span data-i18n="book.depart">Départ</span><b id="outOut">—</b></div>
+              <button type="button" class="linkbtn" id="clearDates" data-i18n="book.clear">Effacer</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend data-i18n="book.step3">3. Vos coordonnées</legend>
+            <div class="fields">
+              <label class="field"><span data-i18n="book.name">Nom</span><input name="name" autocomplete="name" required></label>
+              <label class="field"><span data-i18n="book.email">E-mail</span><input name="email" type="email" autocomplete="email" required></label>
+              <label class="field"><span data-i18n="book.phone">Téléphone</span><input name="phone" type="tel" autocomplete="tel"></label>
+            </div>
+            <p class="lbl" data-i18n="book.opts">Options souhaitées</p>
+            <div class="optpick">
+              <label class="chk sm"><input type="checkbox" name="opt" value="sauna"><span data-i18n="o.sauna"></span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="bike"><span data-i18n="o.bike"></span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="sled"><span data-i18n="o.sled"></span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="snow"><span data-i18n="o.snow"></span></label>
+              <label class="chk sm"><input type="checkbox" name="opt" value="bbq"><span data-i18n="o.bbq"></span></label>
+            </div>
+            <label class="field"><span data-i18n="book.msg">Message</span><textarea name="message" rows="3"></textarea></label>
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+          </fieldset>
+        </div>
+
+        <aside class="estimate" aria-live="polite">
+          <h3 data-i18n="book.est.title">Estimation</h3>
+          <div id="estBody"><p class="muted" data-i18n="book.est.empty"></p></div>
+          <p class="error" id="formErr" role="alert" hidden></p>
+          <button class="btn btn-primary btn-block" type="submit" id="sendBtn" data-i18n="book.send">Envoyer ma demande</button>
+          <p class="ok" id="formOk" role="status" hidden></p>
+          <p class="small light-note"><span data-i18n="book.direct"></span> <a id="airbnbLink" target="_blank" rel="noopener" data-i18n="book.airbnb">Airbnb</a></p>
+        </aside>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- SEJOUR + OU NOUS TROUVER -->
+  <section class="section alt" id="sejour">
+    <div class="wrap">
+      <header class="sec-head"><h2 data-i18n="stay.title">Votre séjour</h2></header>
+      <div class="cards3">
+        <div class="mini"><h3 data-i18n="stay.arrival"></h3><p data-i18n="stay.arrivalT"></p></div>
+        <div class="mini"><h3 data-i18n="stay.during"></h3><p data-i18n="stay.duringT"></p></div>
+        <div class="mini"><h3 data-i18n="stay.departure"></h3><p data-i18n="stay.departureT"></p></div>
+      </div>
+    </div>
+  </section>

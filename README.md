@@ -7,6 +7,7 @@ Site statique (HTML / CSS / JavaScript, **sans outil de build, sans cookie, sans
 
 | Demande | Réalisation |
 |---|---|
+| Site en plusieurs pages | Une page par rubrique du menu, en-tête et pied de page communs, langue conservée d'une page à l'autre |
 | Système de réservation | Calendrier de disponibilités, choix du chalet / des logements, estimation du prix en direct (saisons, week-ends/fériés, remises, ménage, draps), contrôle des durées minimales et de la capacité, envoi de la demande par e-mail |
 | Galeries plus attrayantes | Grille en mosaïque, filtres par thème (extérieur, piscine, intérieur…), agrandissement plein écran (clavier, glissement tactile), chargement différé |
 | Chatbot | Assistant FAQ dans le coin de l'écran (tarifs, capacité, horaires, piscine/sauna, ski, activités…), + lien vers l'assistant Botpress existant pour les questions plus fines |
@@ -70,18 +71,38 @@ python3 -m http.server 8000   # puis ouvrir http://localhost:8000
 
 ## Structure
 
+Le site compte 7 pages, une par rubrique du menu :
+
+| Page | Fichier |
+|---|---|
+| Accueil | `index.html` |
+| Nos chalets | `chalets.html` |
+| Photos | `photos.html` |
+| Visite virtuelle | `visite.html` |
+| Tarifs | `tarifs.html` |
+| Disponibilités et réservation | `reservation.html` (accepte `?site=fresse` ou `?site=bresse`) |
+| Contact | `contact.html` |
+
 ```
-index.html                 page unique (sections ancrées)
+src/                       sources des pages (à modifier pour changer la structure)
+  layout.html              squelette commun
+  partials/                en-tête (menu), pied de page, chatbot, bandeau « Réserver »
+  pages/                   contenu de chaque page
+scripts/build.py           génère les 7 pages .html à la racine à partir de src/
+scripts/sync_availability.py   synchronisation iCal → disponibilités
 assets/css/style.css       design
-assets/js/config.js        ★ réglages (contact, vidéo, tarifs, saisons, photos)
+assets/js/config.js        ★ réglages (contact, vidéo, tarifs, saisons, photos, agendas)
 assets/js/i18n.js          textes FR / EN / DE / NL
 assets/js/main.js          langue, galeries, visite, réservation
 assets/js/chatbot.js       assistant FAQ
-data/availability.json     périodes indisponibles (mis à jour automatiquement si les agendas sont reliés)
-scripts/                   synchronisation iCal → disponibilités
-.github/workflows/         tâche planifiée de synchronisation
+data/availability.json     périodes indisponibles (mises à jour automatiquement)
 photos/                    vos images
 ```
+
+**Modifier le menu ou la structure d'une page** : éditez les fichiers de `src/` puis lancez `python3 scripts/build.py`
+(il faut Python 3 et Node.js) et publiez les pages `.html` générées. Les pages `.html` à la racine sont générées : ne les modifiez
+pas à la main, vos changements seraient écrasés au prochain build.
+Les réglages (`config.js`) et les textes (`i18n.js`) se modifient directement, sans build.
 
 ## Limites à connaître
 
