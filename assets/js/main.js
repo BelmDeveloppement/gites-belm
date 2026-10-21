@@ -497,7 +497,8 @@
     var disc = 0; if (nights >= 14) disc = stay * P.twoWeeksDiscount; else if (nights >= 7) disc = stay * P.weekDiscount;
     var cleaning = B.site === "fresse" ? P.fresse.cleaning : entire ? P.chalet.cleaning : Math.min(P.chalet.cleaning, B.units.reduce(function (s, u) { return s + P.units[u].cleaning; }, 0));
     var guests = Math.max(1, guestsOverride || parseInt(($("#guests") || {}).value, 10) || 1), linen = guests * P.linenPerPerson;
-    return { nights: nights, stay: stay + combo, combo: combo, disc: disc, cleaning: cleaning, linen: linen, total: stay - disc + cleaning + linen };
+    var tax = (P.touristTaxPerPersonNight || 0) * (guestsOverride || parseInt(($("#guests") || {}).value, 10) || 1) * nights;
+    return { nights: nights, stay: stay + combo, combo: combo, disc: disc, cleaning: cleaning, linen: linen, tax: tax, total: stay - disc + cleaning + linen + tax };
   }
 
   function validateSelection() {
@@ -534,7 +535,10 @@
     if (r.combo) rows += "<dt>" + t("book.est.combo") + "</dt><dd>− " + money(r.combo) + "</dd>";
     if (r.disc) rows += "<dt>" + t("book.est.disc") + "</dt><dd>− " + money(r.disc) + "</dd>";
     rows += "<dt>" + t("book.est.cleaning") + "</dt><dd>" + money(r.cleaning) + "</dd>";
-    rows += "<dt>" + t("book.est.linen") + "</dt><dd>" + money(r.linen) + "</dd></dl>";
+    rows += "<dt>" + t("book.est.linen") + "</dt><dd>" + money(r.linen) + "</dd>";
+    if (r.tax) rows += "<dt>" + t("book.est.tax") + "</dt><dd>" + money(r.tax) + "</dd>";
+    rows += "</dl>";
+    if (!C.pricing.touristTaxPerPersonNight) rows += '<p class="small">' + t("rates.tax") + "</p>";
     var banded = B.site === "fresse" || B.units.length === 4;
     if (banded) { var lo = compute("low"), hi = compute("high"); rows += '<p class="est-total"><span>' + t("book.est.total") + "</span><b>" + money(r.total) + "</b></p><p class='small'>" + t("book.est.range") + " " + money(lo.total) + " – " + money(hi.total) + "</p>"; }
     else rows += '<p class="est-total"><span>' + t("book.est.total") + "</span><b>" + money(r.total) + "</b></p>";

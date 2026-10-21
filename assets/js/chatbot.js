@@ -204,8 +204,10 @@
       if (c.disc) lines.push(A.t("book.est.disc") + " : − " + A.money(c.disc));
       lines.push(A.t("book.est.cleaning") + " : " + A.money(c.cleaning));
       lines.push(g ? A.t("book.est.linen") + " (" + g + ") : " + A.money(c.linen) : A.t("chat.s.linenOnly"));
+      if (c.tax) lines.push(A.t("book.est.tax") + " : " + A.money(c.tax));
       lines.push("➡️ " + A.t("book.est.total") + " : " + A.money(c.total - adj));
       if (r.banded) lines.push(A.t("book.est.range") + " " + A.money(r.lo.total - adj) + " – " + A.money(r.hi.total - adj));
+      if (!C.pricing.touristTaxPerPersonNight) lines.push(A.t("rates.tax"));
       lines.push(A.t("chat.s.note"));
       var url = "reservation.html?site=" + ctx.site + (ctx.site === "bresse" ? "&units=" + ctx.units.join(",") : "") + "&from=" + ctx.arrive + "&to=" + ctx.depart + (g ? "&guests=" + g : "");
       acts.push({ label: A.t("chat.s.cta"), href: url, close: true });

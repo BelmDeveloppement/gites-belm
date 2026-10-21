@@ -109,6 +109,7 @@ window.BELM = {
     combinationDiscount: 0.10,   // combinaison de gîtes : somme des tarifs − 10 %
     weekDiscount: 0.10,          // 7 nuits et plus
     twoWeeksDiscount: 0.15,      // 14 nuits et plus
+    touristTaxPerPersonNight: null, // € par personne et par nuit ; laisser null tant que le montant n'est pas fixé (une mention « en supplément » s'affiche)
     linenPerPerson: 15,          // draps + serviettes, obligatoires
     minNights: { bresse: 2, fresseStandard: 2, fresseBusy: 3 }
   },
