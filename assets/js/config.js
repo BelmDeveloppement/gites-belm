@@ -5,7 +5,7 @@
 window.BELM = {
   // ---- Contact ----
   contact: {
-    email: "contact@gites-belm.fr",      // À REMPLACER par votre vraie adresse
+    email: "jean-marc.misert@laposte.net",
     phone: "",                            // ex : "+33 6 00 00 00 00" (laisser vide pour masquer)
     facebook: "https://www.facebook.com/107251145336952",
     youtubeChannel: "https://www.youtube.com/@GitesBelM",
