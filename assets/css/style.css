@@ -219,8 +219,8 @@ p { margin: 0 0 1em; }
 .hint { color: var(--muted); font-size: .94rem; margin-bottom: 8px; }
 
 .cal { user-select: none; }
-.cal-nav { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.cal-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 1.4rem; cursor: pointer; color: var(--forest); }
+.cal-nav { display: flex; justify-content: space-between; margin-bottom: 4px; position: relative; z-index: 2; pointer-events: none; }
+.cal-btn { pointer-events: auto; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 1.4rem; cursor: pointer; color: var(--forest); }
 .cal-btn:hover { background: var(--cream); }
 .months { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: -40px; }
 .mtitle { text-align: center; font: 600 1.1rem var(--serif); text-transform: capitalize; color: var(--forest); margin: 8px 0 10px; }
