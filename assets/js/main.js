@@ -483,7 +483,7 @@
     return P.fresseStandard;
   }
 
-  function compute(mode, guestsOverride) { // mode : "season" | "low" | "high"
+  function compute(mode, guestsOverride, minorsOverride) { // mode : "season" | "low" | "high"
     var P = C.pricing, nights = diffDays(B.arrive, B.depart), stay = 0, entire = B.site === "bresse" && B.units.length === 4;
     for (var x = B.arrive; x < B.depart; x = addDays(x, 1)) {
       var lvl = mode === "season" ? season(x) : mode, we = isWeekendNight(x) || isHoliday(x), nightly = 0;
@@ -497,7 +497,8 @@
     var disc = 0; if (nights >= 14) disc = stay * P.twoWeeksDiscount; else if (nights >= 7) disc = stay * P.weekDiscount;
     var cleaning = B.site === "fresse" ? P.fresse.cleaning : entire ? P.chalet.cleaning : Math.min(P.chalet.cleaning, B.units.reduce(function (s, u) { return s + P.units[u].cleaning; }, 0));
     var guests = Math.max(1, guestsOverride || parseInt(($("#guests") || {}).value, 10) || 1), linen = guests * P.linenPerPerson;
-    var tax = (P.touristTaxPerPersonNight || 0) * (guestsOverride || parseInt(($("#guests") || {}).value, 10) || 1) * nights;
+    var minors = minorsOverride != null ? minorsOverride : (parseInt(($("#minors") || {}).value, 10) || 0), adults = Math.max(0, guests - Math.max(0, minors));
+    var tax = (P.touristTaxPerPersonNight || 0) * adults * nights;
     return { nights: nights, stay: stay + combo, combo: combo, disc: disc, cleaning: cleaning, linen: linen, tax: tax, total: stay - disc + cleaning + linen + tax };
   }
 
@@ -570,7 +571,7 @@
     var L = [
       "Demande de réservation — site Gîtes BEL'M", "",
       "Lieu : " + (p.site === "fresse" ? "Fresse-sur-Moselle (BEL'M Amiral)" : "La Bresse — " + (p.units.length === 4 ? "chalet entier" : p.units.join(", ").toUpperCase())),
-      "Arrivée : " + p.arrive, "Départ : " + p.depart, "Nuits : " + p.nights, "Voyageurs : " + p.guests,
+      "Arrivée : " + p.arrive, "Départ : " + p.depart, "Nuits : " + p.nights, "Voyageurs : " + p.guests + (p.minors ? " (dont " + p.minors + " mineur(s))" : ""),
       "Options : " + (p.options.length ? p.options.join(", ") : "aucune"),
       "Estimation : " + Math.round(p.estimate) + " €", "",
       "Nom : " + p.name, "E-mail : " + p.email, "Téléphone : " + (p.phone || "—"), "Langue du visiteur : " + p.lang, "", "Message : " + (p.message || "—")
@@ -591,7 +592,7 @@
     var est = compute("season");
     var p = {
       site: B.site, units: B.site === "bresse" ? B.units.slice() : [], arrive: B.arrive, depart: B.depart, nights: est.nights,
-      guests: parseInt(f.elements.guests.value, 10) || 1, options: $$('input[name="opt"]:checked').map(function (c) { return c.value; }),
+      guests: parseInt(f.elements.guests.value, 10) || 1, minors: parseInt(f.elements.minors.value, 10) || 0, options: $$('input[name="opt"]:checked').map(function (c) { return c.value; }),
       estimate: est.total, name: name, email: email, phone: f.elements.phone.value.trim(), message: f.elements.message.value.trim(), lang: lang
     };
     e.hidden = true;
@@ -615,7 +616,7 @@
     $$('input[name="unit"]').forEach(function (c) { c.addEventListener("change", onUnitsChange); });
     $("#allUnits").addEventListener("click", function () { B.units = UNIT_KEYS.slice(); syncUnitBoxes(); onUnitsChange(); });
     $("#clearDates").addEventListener("click", function () { B.arrive = B.depart = null; renderCalendar(); updateEstimate(); });
-    $("#guests").addEventListener("input", updateEstimate);
+    $("#guests").addEventListener("input", updateEstimate); $("#minors").addEventListener("input", updateEstimate);
     $("#bookForm").addEventListener("submit", submitForm);
   }
 
@@ -633,8 +634,8 @@
       res.capacity = capacity(); res.overCap = !!req.guests && req.guests > res.capacity;
       res.past = req.arrive < res.today;
       res.banded = req.site === "fresse" || req.units.length === 4;
-      res.r = compute("season", req.guests || 1);
-      res.lo = res.banded ? compute("low", req.guests || 1) : null; res.hi = res.banded ? compute("high", req.guests || 1) : null;
+      res.r = compute("season", req.guests || 1, req.minors || 0);
+      res.lo = res.banded ? compute("low", req.guests || 1, req.minors || 0) : null; res.hi = res.banded ? compute("high", req.guests || 1, req.minors || 0) : null;
       res.alts = [];
       if (!res.free) {
         for (var k = 1; k <= 28 && res.alts.length < 2; k++) [k, -k].forEach(function (sh) {
@@ -678,6 +679,7 @@
       var re = /^\d{4}-\d{2}-\d{2}$/, u = (qs.get("units") || "").split(",").filter(function (x) { return UNIT_KEYS.indexOf(x) > -1; });
       if (site === "bresse" && u.length) { B.units = u; syncUnitBoxes(); }
       var g = parseInt(qs.get("guests"), 10); if (g > 0) $("#guests").value = g;
+      var mi = parseInt(qs.get("minors"), 10); if (mi > 0) $("#minors").value = mi;
       if (re.test(qs.get("from") || "") && re.test(qs.get("to") || "") && qs.get("to") > qs.get("from")) { B.arrive = qs.get("from"); B.depart = qs.get("to"); B.view = B.arrive.slice(0, 8) + "01"; }
       renderCalendar(); updateEstimate();
     }

@@ -88,7 +88,7 @@
   function nextFriday() { var d = A.parse(A.today()), add = ((5 - d.getUTCDay()) + 7) % 7 || 7; return A.addDays(A.today(), add); }
 
   function parseSlots(raw) {
-    var q = norm(raw), out = { arrive: null, depart: null, nights: null, guests: null, site: null, units: null, entire: false, month: null }, m, x;
+    var q = norm(raw), out = { arrive: null, depart: null, nights: null, guests: null, minors: null, site: null, units: null, entire: false, month: null }, m, x;
     // week-end
     var we = /\b(week-?end|wochenende)\b/.test(q); if (we) q = q.replace(/\b(week-?end|wochenende)\b/g, " ");
     // dates
@@ -122,8 +122,12 @@
     else if (/\b(semaine|week|woche)\b/.test(q)) out.nights = 7;
     if (out.arrive && !out.depart && out.nights) out.depart = A.addDays(out.arrive, out.nights);
     // personnes
-    var g = 0, gm, re1 = /(\d{1,2})\s*(?:personnes?|pers\b|people|persons?|guests?|adults?|adultes?|personen|gaste|gaeste|leute|pax|mensen|volwassenen|erwachsene|enfants?|kids?|children|child|kinder|kinderen|ados?)/g;
+    var g = 0, mn = 0, gm, re1 = /(\d{1,2})\s*(?:personnes?|pers\b|people|persons?|guests?|adults?|adultes?|personen|gaste|gaeste|leute|pax|mensen|volwassenen|erwachsene)/g;
     while ((gm = re1.exec(q))) g += +gm[1];
+    var re2 = /(\d{1,2})\s*(?:enfants?|kids?|children|child|kinder|kinderen|ados?|mineurs?|minors?|bebes?)/g;
+    while ((gm = re2.exec(q))) mn += +gm[1];
+    if (mn && !/\b(dont|including|inclus|davon|darunter|waarvan|of which|of whom)\b/.test(q)) g += mn;
+    out.minors = mn || null;
     if (!g && (gm = /(?:famille|groupe|group|gruppe|groep|family|familie)\s+(?:de\s+|of\s+|von\s+|van\s+)?(\d{1,2})\b/.exec(q))) g = +gm[1];
     if (!g && (gm = new RegExp("\\b(?:pour|for|fur|fuer|voor|avec|with|mit|met|nous sommes|we are|wir sind|we zijn|on est)\\s+(\\d{1,2})\\b(?!\\s*(?:nuit|night|nacht|nachten|jour|day|tag|dag|semaine|week|woche|[\\/.]\\d|h\\b|" + M + "))").exec(q))) g = +gm[1];
     if (g > 0 && g <= 40) out.guests = g;
@@ -144,7 +148,7 @@
   }
 
   /* ---------------- Contexte de conversation et réponses calculées ---------------- */
-  var ctx = { site: null, units: [], arrive: null, depart: null, guests: null, month: null, pending: false };
+  var ctx = { site: null, units: [], arrive: null, depart: null, guests: null, minors: 0, month: null, pending: false };
 
   function where(c) {
     if (c.site === "fresse") return A.t("chat.s.wFresse");
@@ -181,7 +185,7 @@
   }
 
   function quoteAnswer() {
-    var req = { site: ctx.site, units: ctx.units, arrive: ctx.arrive, depart: ctx.depart, guests: ctx.guests };
+    var req = { site: ctx.site, units: ctx.units, arrive: ctx.arrive, depart: ctx.depart, guests: ctx.guests, minors: ctx.minors };
     var r = A.quote(req), W = where(ctx), lines = [], acts = [];
     if (r.past) { ctx.arrive = ctx.depart = null; ctx.pending = true; bubble(A.t("chat.s.past"), "bot"); return; }
     var span = { from: A.fmtDate(ctx.arrive), to: A.fmtDate(ctx.depart), n: r.nights, where: W };
@@ -197,19 +201,19 @@
     if (r.tooShort) lines.push(A.t("chat.s.min", { n: r.minNights }));
     if (r.overCap) lines.push(A.t("chat.s.cap", { n: r.capacity, where: W }));
     if (r.free) {
-      var P = C.pricing, g = ctx.guests, c = r.r, adj = g ? 0 : P.linenPerPerson;
+      var P = C.pricing, g = ctx.guests, c = r.r, adjOf = function (x) { return g ? 0 : P.linenPerPerson + x.tax; }, adj = adjOf(c);
       lines.push("");
       lines.push(A.t("book.est.stay") + " : " + A.money(c.stay));
       if (c.combo) lines.push(A.t("book.est.combo") + " : − " + A.money(c.combo));
       if (c.disc) lines.push(A.t("book.est.disc") + " : − " + A.money(c.disc));
       lines.push(A.t("book.est.cleaning") + " : " + A.money(c.cleaning));
       lines.push(g ? A.t("book.est.linen") + " (" + g + ") : " + A.money(c.linen) : A.t("chat.s.linenOnly"));
-      if (c.tax) lines.push(A.t("book.est.tax") + " : " + A.money(c.tax));
+      if (c.tax && g) lines.push(A.t("book.est.tax") + " : " + A.money(c.tax));
       lines.push("➡️ " + A.t("book.est.total") + " : " + A.money(c.total - adj));
-      if (r.banded) lines.push(A.t("book.est.range") + " " + A.money(r.lo.total - adj) + " – " + A.money(r.hi.total - adj));
-      if (!C.pricing.touristTaxPerPersonNight) lines.push(A.t("rates.tax"));
+      if (r.banded) lines.push(A.t("book.est.range") + " " + A.money(r.lo.total - adjOf(r.lo)) + " – " + A.money(r.hi.total - adjOf(r.hi)));
+      if (!g || !C.pricing.touristTaxPerPersonNight) lines.push(A.t("rates.tax"));
       lines.push(A.t("chat.s.note"));
-      var url = "reservation.html?site=" + ctx.site + (ctx.site === "bresse" ? "&units=" + ctx.units.join(",") : "") + "&from=" + ctx.arrive + "&to=" + ctx.depart + (g ? "&guests=" + g : "");
+      var url = "reservation.html?site=" + ctx.site + (ctx.site === "bresse" ? "&units=" + ctx.units.join(",") : "") + "&from=" + ctx.arrive + "&to=" + ctx.depart + (g ? "&guests=" + g : "") + (g && ctx.minors ? "&minors=" + ctx.minors : "");
       acts.push({ label: A.t("chat.s.cta"), href: url, close: true });
     }
     ctx.pending = false;
@@ -239,7 +243,7 @@
       ((s.site || s.units) && AVAIL_RE.test(q) && !info);
     if (!trigger) return false;
     if (s.site) { if (s.site !== ctx.site || s.units) ctx.units = s.units || (s.site === "bresse" && s.site === ctx.site ? ctx.units : []); ctx.site = s.site; if (s.site === "fresse") ctx.units = []; }
-    if (s.guests) ctx.guests = s.guests;
+    if (s.guests) { ctx.guests = s.guests; ctx.minors = s.minors || 0; }
     if (hasDate) { ctx.arrive = s.arrive; ctx.depart = s.depart; ctx.month = null; }
     else if (s.nights && ctx.arrive) ctx.depart = A.addDays(ctx.arrive, s.nights);
     if (s.month && !hasDate) { ctx.month = s.month; ctx.arrive = ctx.depart = null; }
