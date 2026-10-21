@@ -6,6 +6,17 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "pets",    kw: ["chien", "chiens", "animal", "animaux", "chat accepte", "toutou", "dog", "dogs", "pets", "my pet", "haustier", "haustiere", "hund", "hunde", "katze", "katzen", "huisdier", "huisdieren", "hond", "honden", "katten"] },
+    { id: "party",   kw: ["fete", "fetes", "anniversaire", "soiree", "mariage", "evenement", "bruit", "party", "parties", "birthday", "wedding", "noise", "feier", "feiern", "geburtstag", "hochzeit", "larm", "feest", "feesten", "verjaardag", "bruiloft", "lawaai"] },
+    { id: "payment", kw: ["acompte", "paiement", "payer", "virement", "solde", "carte bancaire", "payment", "how to pay", "bezahlen", "zahlung", "anzahlung", "betalen", "betaling", "aanbetaling", "voorschot"] },
+    { id: "cancel",  kw: ["annul", "annuler", "annulation", "cancellation", "cancel my", "stornierung", "annulering", "rembours", "cancel", "refund", "stornier", "storno", "erstattung", "annuleren", "restitutie", "terugbetal"] },
+    { id: "caution", kw: ["caution", "depot de garantie", "security deposit", "damage deposit", "kaution", "borg", "waarborg"] },
+    { id: "baby",    kw: ["bebe", "lit parapluie", "chaise haute", "cot", "crib", "high chair", "highchair", "with baby", "with a baby", "infant", "toddler", "babybett", "kinderbett", "hochstuhl", "mit baby", "babybed", "babybedje", "kinderstoel", "babystoel", "met baby", "kampeerbed"] },
+    { id: "smoke",   kw: ["fumeur", "fumeurs", "fumer", "cigarette", "smoke", "smoking", "smoker", "rauchen", "raucher", "roken", "rokers"] },
+    { id: "ev",      kw: ["voiture electrique", "vehicule electrique", "borne", "recharge", "electric car", "charging", "ladestation", "elektroauto", "elektrische auto", "laadpaal"] },
+    { id: "pmr",     kw: ["pmr", "handicap", "mobilite reduite", "fauteuil roulant", "ascenseur", "accessib", "wheelchair", "disabled", "mobility", "elevator", "rollstuhl", "barrierefrei", "behindert", "rolstoel", "toegankelijk"] },
+    { id: "late",    kw: ["arrivee tardive", "tardive", "arrive tard", "arriver tard", "arriverai tard", "arrivons tard", "arriverons tard", "tard le soir", "tard dans la soiree", "apres 20", "late arrival", "arrive late", "after 8", "late check", "spate anreise", "spat anreisen", "nach 20", "late aankomst", "laat aankomen", "na 20"] },
+    { id: "winter",  kw: ["pneu", "pneus", "deneig", "verglas", "chaines a neige", "chaines neige", "winter tyres", "winter tires", "snow chains", "snow tyres", "road conditions", "winterreifen", "schneeketten", "winterbanden", "sneeuwkettingen"] },
     { id: "contact", kw: ["contact", "mail", "e-mail", "email", "telephone", "tel", "phone", "appeler", "call", "anrufen", "bellen", "joindre", "kontakt"] },
     { id: "rent",    kw: ["vtt", "luge", "raquette", "charbon", "bois", "bike", "bikes", "sledge", "sled", "snowshoe", "snowshoes", "schlitten", "schneeschuh", "slee", "sleeen", "sneeuwschoen", "holzkohle", "houtskool", "fahrrad", "fiets", "option", "options", "optionen", "opties", "verleih", "huur"] },
     { id: "linen",   kw: ["drap", "draps", "serviette", "serviettes", "linen", "towel", "towels", "bettwasche", "handtuch", "handtucher", "beddengoed", "handdoek", "handdoeken"] },
@@ -251,6 +262,7 @@
     if (id === "rates") acts = [{ label: A.t("nav.rates"), href: "tarifs.html", close: true }, { label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
     else if (id === "book" || id === "min") acts = [{ label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
     else if (id === "pool" || id === "cap") acts = [{ label: A.t("nav.gallery"), href: "photos.html", close: true }];
+    else if (["pets", "pmr", "late", "baby", "cancel", "payment", "caution"].indexOf(id) > -1) acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "contact") acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "where") acts = [{ label: A.t("nav.contact"), href: "contact.html", close: true }];
     var txt = id === "contact" ? A.t("chat.a.contact", contactVars) : A.t("chat.a." + id);
