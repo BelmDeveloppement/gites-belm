@@ -6,6 +6,7 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "farm",     kw: ["ferme-auberge", "fermes-auberges", "ferme auberge", "fermes auberges", "auberge", "auberges", "restaurant", "restaurants", "ou manger", "repas marcaire", "marcaire", "where to eat", "eat out", "eating out", "farm inn", "farm inns", "farm-inn", "essen gehen", "bauernwirtschaft", "gasthof", "restaurants in der", "uit eten", "waar eten", "boerderijherberg", "eetcafe"] },
     { id: "cleaning", kw: ["menage", "avant de partir", "poubelle", "poubelles", "vaisselle", "cleaning", "before leaving", "rubbish", "trash", "garbage", "dishes", "reinigung", "endreinigung", "muell", "mull", "schoonmaak", "afval", "afwas"] },
     { id: "wifi",    kw: ["wifi", "wi-fi", "wlan", "internet", "teletravail", "debit", "remote work", "work from home", "home office", "homeoffice", "thuiswerken", "bandwidth"] },
     { id: "checkin", kw: ["cle", "cles", "clef", "clefs", "boite a cles", "conciergerie", "concierge", "accueil", "key", "keys", "key box", "keybox", "schlussel", "schluessel", "schlusselkasten", "sleutel", "sleutels", "sleutelkluisje", "welcome"] },
