@@ -44,7 +44,7 @@
     lang = l;
     if (persist) { try { localStorage.setItem("belm-lang", l); } catch (e) {} }
     applyI18n();
-    renderRates(); renderGalleryChips(); renderGallery(); renderChapters(); renderPlayerMsg();
+    renderRates(); renderGalleryChips(); renderGallery(); renderTour();
     renderCalendar(); updateEstimate(); updateFormMsgs();
     document.dispatchEvent(new CustomEvent("belm:lang", { detail: { lang: lang } }));
   }
@@ -210,38 +210,132 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Visite virtuelle (YouTube chargé uniquement après clic)             */
+  /* Visite virtuelle : pièces cliquables synchronisées avec la vidéo    */
+  /* (YouTube n'est chargé qu'après un clic, en mode sans cookie)        */
   /* ------------------------------------------------------------------ */
-  var playerLoaded = false;
-  function loadVideo(start) {
-    if (!C.youtubeVideoId) return;
-    var box = $("#player");
-    var src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(C.youtubeVideoId) + "?autoplay=1&rel=0&modestbranding=1&start=" + (start || 0);
-    var f = $("iframe", box);
-    if (!f) {
-      f = document.createElement("iframe");
-      f.title = t("tour.title"); f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
-      f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin"; box.appendChild(f);
-    }
-    f.src = src; box.classList.add("is-playing"); playerLoaded = true;
-  }
-  function renderPlayerMsg() {
-    var msg = $("#playerMsg"), btn = $("#playBtn");
+  var tour = { yt: null, ready: false, loading: false, pending: null, cur: -1, zone: "all", timer: null, fallback: false, started: false };
+  var ZONES = ["all", "ext", "rdc", "etage", "detente"];
+  function chs() { return C.videoChapters || []; }
+  function mmss(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function chapterAt(tm) { var a = chs(), r = 0; for (var i = 0; i < a.length; i++) if (a[i].t <= tm) r = i; return r; }
+  function chEnd(i) { var a = chs(); return i + 1 < a.length ? a[i + 1].t : (C.videoDuration || a[i].t + 20); }
+
+  function renderTour() {
+    var zbox = $("#tourZones"), rbox = $("#tourRooms"), tl = $("#tourTimeline"); if (!zbox) return;
+    var a = chs(), msg = $("#playerMsg"), btn = $("#playBtn");
     if (C.youtubeVideoId) { msg.textContent = t("tour.consent"); btn.setAttribute("aria-label", t("tour.play")); btn.hidden = false; }
     else { msg.textContent = t("tour.soon"); btn.hidden = true; }
+
+    var present = {}; a.forEach(function (c) { present[c.zone] = true; });
+    zbox.innerHTML = "";
+    ZONES.forEach(function (z) {
+      if (z !== "all" && !present[z]) return;
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip" + (tour.zone === z ? " is-on" : ""); b.textContent = t("tour.zone." + z);
+      b.addEventListener("click", function () { tour.zone = z; renderTour(); });
+      zbox.appendChild(b);
+    });
+
+    rbox.innerHTML = "";
+    a.forEach(function (c, i) {
+      if (tour.zone !== "all" && c.zone !== tour.zone) return;
+      var b = document.createElement("button"); b.type = "button"; b.className = "room"; b.setAttribute("data-i", i);
+      var img = document.createElement("span"); img.className = "room-img"; img.style.backgroundImage = "url(" + c.img + ")";
+      var num = document.createElement("span"); num.className = "room-num"; num.textContent = i + 1;
+      var tm = document.createElement("span"); tm.className = "room-time"; tm.textContent = mmss(c.t);
+      img.appendChild(num); img.appendChild(tm);
+      var txt = document.createElement("span"); txt.className = "room-txt";
+      var nm = document.createElement("b"); nm.textContent = t("ch." + c.id);
+      var ds = document.createElement("span"); ds.textContent = t("chd." + c.id);
+      txt.appendChild(nm); txt.appendChild(ds); b.appendChild(img); b.appendChild(txt);
+      b.addEventListener("click", function () { playAt(c.t); if (window.matchMedia("(max-width: 980px)").matches) $("#player").scrollIntoView({ behavior: "smooth", block: "center" }); });
+      rbox.appendChild(b);
+    });
+
+    tl.innerHTML = "";
+    a.forEach(function (c, i) {
+      var sg = document.createElement("button"); sg.type = "button"; sg.className = "seg-t"; sg.style.flexGrow = String(Math.max(1, chEnd(i) - c.t));
+      sg.title = t("ch." + c.id) + " · " + mmss(c.t); sg.setAttribute("aria-label", sg.title); sg.setAttribute("data-i", i);
+      sg.addEventListener("click", function () { playAt(c.t); });
+      tl.appendChild(sg);
+    });
+    setActive(tour.cur, false);
   }
-  function renderChapters() {
-    var box = $("#chapters"); box.innerHTML = "";
-    if (!C.youtubeVideoId) return;
-    (C.videoChapters || []).forEach(function (c) {
-      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = t("tour.chap." + c.label);
-      b.addEventListener("click", function () { loadVideo(c.t); $("#player").scrollIntoView({ behavior: "smooth", block: "center" }); });
-      box.appendChild(b);
+
+  function setActive(i, autoScroll) {
+    var a = chs(); tour.cur = i;
+    $$("#tourRooms .room").forEach(function (el) { el.classList.toggle("is-active", +el.getAttribute("data-i") === i); });
+    $$("#tourTimeline .seg-t").forEach(function (el) { var k = +el.getAttribute("data-i"); el.classList.toggle("is-active", k === i); el.classList.toggle("is-past", i >= 0 && k < i); });
+    var nm = $("#nowName"), ds = $("#nowDesc");
+    if (i >= 0 && a[i]) { nm.textContent = t("ch." + a[i].id); ds.textContent = t("chd." + a[i].id); } else { nm.textContent = ""; ds.textContent = ""; }
+    $("#tourPrev").disabled = i <= 0; $("#tourNext").disabled = i >= a.length - 1;
+    if (autoScroll && i >= 0) {
+      var card = $('#tourRooms .room[data-i="' + i + '"]'), box = $("#tourRooms");
+      if (card && box) box.scrollTo({ top: card.offsetTop - 4, left: card.offsetLeft - 4, behavior: "smooth" });
+    }
+  }
+
+  function loadYTApi(ok, fail) {
+    if (window.YT && window.YT.Player) { ok(); return; }
+    var done = false, once = function (fn) { return function () { if (!done) { done = true; fn(); } }; };
+    var good = once(ok), bad = once(fail), prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () { if (typeof prev === "function") prev(); good(); };
+    var sc = document.createElement("script"); sc.src = "https://www.youtube.com/iframe_api"; sc.async = true; sc.onerror = bad;
+    document.head.appendChild(sc); setTimeout(bad, 8000);
+  }
+
+  function iframeFallback(start) {
+    var box = $("#player"), f = $("iframe", box);
+    if (!f) {
+      var host = $("#ytHost"); f = document.createElement("iframe");
+      f.title = t("tour.title"); f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+      f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
+      if (host) host.replaceWith(f); else box.appendChild(f);
+    }
+    f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(C.youtubeVideoId) + "?autoplay=1&rel=0&modestbranding=1&playsinline=1&start=" + (start || 0);
+  }
+
+  function createPlayer() {
+    tour.yt = new window.YT.Player("ytHost", {
+      host: "https://www.youtube-nocookie.com", videoId: C.youtubeVideoId, width: "100%", height: "100%",
+      playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1, start: tour.pending || 0 },
+      events: {
+        onReady: function () {
+          tour.ready = true;
+          if (tour.pending !== null) { tour.yt.seekTo(tour.pending, true); tour.pending = null; }
+          tour.yt.playVideo();
+          if (!tour.timer) tour.timer = setInterval(function () {
+            if (!tour.ready || !tour.yt || !tour.yt.getCurrentTime) return;
+            var i = chapterAt(tour.yt.getCurrentTime()); if (i !== tour.cur) setActive(i, true);
+          }, 400);
+        },
+        onError: function () { tour.fallback = true; tour.ready = false; iframeFallback(tour.pending || 0); }
+      }
     });
   }
+
+  function playAt(tm) {
+    if (!C.youtubeVideoId) return;
+    $("#player").classList.add("is-playing");
+    setActive(chapterAt(tm), false);
+    if (tour.yt && tour.ready) { tour.yt.seekTo(tm, true); tour.yt.playVideo(); return; }
+    if (tour.fallback) { iframeFallback(tm); return; }
+    tour.pending = tm;
+    if (tour.loading) return;
+    tour.loading = true;
+    loadYTApi(createPlayer, function () { tour.fallback = true; iframeFallback(tour.pending || 0); });
+  }
+
+  function stepRoom(d) {
+    var a = chs(); if (!a.length) return;
+    var i = Math.min(a.length - 1, Math.max(0, (tour.cur < 0 ? 0 : tour.cur) + d)); playAt(a[i].t);
+  }
+
   function initTour() {
-    $("#playBtn").addEventListener("click", function () { loadVideo(0); });
-    $("#posterBg").addEventListener("click", function () { loadVideo(0); });
+    if (C.videoPoster) $("#posterBg").style.backgroundImage = "url(" + C.videoPoster + ")";
+    $("#playBtn").addEventListener("click", function () { playAt(0); });
+    $("#posterBg").addEventListener("click", function () { playAt(0); });
+    $("#tourPrev").addEventListener("click", function () { stepRoom(-1); });
+    $("#tourNext").addEventListener("click", function () { stepRoom(1); });
   }
 
   /* ------------------------------------------------------------------ */

@@ -22,15 +22,33 @@ window.BELM = {
   formEndpoint: "",
 
   // ---- Visite virtuelle du BEL'M Amiral (YouTube) ----
-  // Collez l'identifiant de la vidéo : youtube.com/watch?v=XXXXXXXXXXX → "XXXXXXXXXXX"
+  // Identifiant de la vidéo : youtube.com/watch?v=XXXXXXXXXXX → "XXXXXXXXXXX"
   youtubeVideoId: "acCizWG_uLM",
-  // Chapitres facultatifs (secondes) pour sauter à une pièce : { label: "piscine", t: 95 }
-  // `label` est une clé de traduction (voir i18n.js, rubrique "tour.chap.*").
+  // Durée de la vidéo en secondes (sert à dimensionner la frise de la visite)
+  videoDuration: 431,
+  // Image affichée avant le lancement de la vidéo
+  videoPoster: "photos/fresse/visite/poster.jpg",
+  // Pièces de la visite : t = seconde de début dans la vidéo, zone = ext | rdc | etage | detente,
+  // img = vignette. Les noms et descriptions sont dans i18n.js (clés "ch.<id>" et "chd.<id>").
+  // Pour corriger un passage de la vidéo, changez simplement la valeur de `t` (en secondes).
   videoChapters: [
-    // { label: "exterieur", t: 0 },
-    // { label: "piscine",   t: 60 },
-    // { label: "cuisine",   t: 150 },
-    // { label: "chambres",  t: 210 }
+    { id: "arrivee",  t: 0,   zone: "ext",     img: "photos/fresse/visite/01-arrivee.jpg" },
+    { id: "entree",   t: 28,  zone: "rdc",     img: "photos/fresse/visite/02-entree.jpg" },
+    { id: "salon",    t: 50,  zone: "rdc",     img: "photos/fresse/visite/03-salon.jpg" },
+    { id: "cuisine",  t: 70,  zone: "rdc",     img: "photos/fresse/visite/04-cuisine.jpg" },
+    { id: "terrasse", t: 94,  zone: "ext",     img: "photos/fresse/visite/05-terrasse.jpg" },
+    { id: "sejour",   t: 158, zone: "rdc",     img: "photos/fresse/visite/06-sejour.jpg" },
+    { id: "sdd",      t: 176, zone: "rdc",     img: "photos/fresse/visite/07-sdd.jpg" },
+    { id: "bar",      t: 184, zone: "rdc",     img: "photos/fresse/visite/08-bar.jpg" },
+    { id: "chambre1", t: 200, zone: "etage",   img: "photos/fresse/visite/09-chambre1.jpg" },
+    { id: "biblio",   t: 238, zone: "etage",   img: "photos/fresse/visite/10-biblio.jpg" },
+    { id: "chambre2", t: 248, zone: "etage",   img: "photos/fresse/visite/11-chambre2.jpg" },
+    { id: "chambre3", t: 294, zone: "etage",   img: "photos/fresse/visite/12-chambre3.jpg" },
+    { id: "sdb",      t: 310, zone: "etage",   img: "photos/fresse/visite/13-sdb.jpg" },
+    { id: "escalier", t: 334, zone: "detente", img: "photos/fresse/visite/14-escalier.jpg" },
+    { id: "sauna",    t: 362, zone: "detente", img: "photos/fresse/visite/15-sauna.jpg" },
+    { id: "jeux",     t: 382, zone: "detente", img: "photos/fresse/visite/16-jeux.jpg" },
+    { id: "piscine",  t: 406, zone: "detente", img: "photos/fresse/visite/17-piscine.jpg" }
   ],
 
   // ---- Assistant avancé (Botpress) déjà en place sur l'ancien site ----
