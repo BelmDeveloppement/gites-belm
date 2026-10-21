@@ -6,6 +6,9 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "laundry", kw: ["lave-linge", "lave linge", "laverie", "machine a laver", "seche-linge", "seche linge", "washing machine", "laundry", "dryer", "washer", "waschmaschine", "trockner", "wasmachine", "droger", "wasserette"] },
+    { id: "games",   kw: ["billard", "babyfoot", "escape game", "escape", "flechette", "flechettes", "jeux", "jeu de societe", "salle de sport", "fitness", "gym", "darts", "pool table", "board games", "games", "table football", "kicker", "tischkicker", "billiard", "dart", "gesellschaftsspiele", "spiele", "fitnessraum", "biljart", "tafelvoetbal", "spelletjes", "gezelschapsspellen", "fitnessruimte"] },
+    { id: "parking", kw: ["parking", "se garer", "garer", "stationnement", "park", "parkplatz", "parkeren", "parkeerplaats"] },
     { id: "farm",     kw: ["ferme-auberge", "fermes-auberges", "ferme auberge", "fermes auberges", "auberge", "auberges", "restaurant", "restaurants", "ou manger", "repas marcaire", "marcaire", "where to eat", "eat out", "eating out", "farm inn", "farm inns", "farm-inn", "essen gehen", "bauernwirtschaft", "gasthof", "restaurants in der", "uit eten", "waar eten", "boerderijherberg", "eetcafe"] },
     { id: "cleaning", kw: ["menage", "avant de partir", "poubelle", "poubelles", "vaisselle", "cleaning", "before leaving", "rubbish", "trash", "garbage", "dishes", "reinigung", "endreinigung", "muell", "mull", "schoonmaak", "afval", "afwas"] },
     { id: "wifi",    kw: ["wifi", "wi-fi", "wlan", "internet", "teletravail", "debit", "remote work", "work from home", "home office", "homeoffice", "thuiswerken", "bandwidth"] },
@@ -271,6 +274,12 @@
     return box;
   }
 
+  // Réponses propres à un site : clés chat.a.<id>.f (Fresse) et chat.a.<id>.b (La Bresse)
+  function variants(id) {
+    var o = {}, kf = "chat.a." + id + ".f", kb = "chat.a." + id + ".b", f = A.t(kf), b = A.t(kb);
+    if (f !== kf) o.f = f; if (b !== kb) o.b = b; return o;
+  }
+
   function answer(id) {
     var contactVars = { mail: C.contact.email, phone: C.contact.phone ? " / " + C.contact.phone : "" };
     var acts = [];
@@ -281,7 +290,15 @@
     else if (["pets", "pmr", "late", "baby", "cancel", "payment", "caution"].indexOf(id) > -1) acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "contact") acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "where") acts = [{ label: A.t("nav.contact"), href: "contact.html", close: true }];
-    var txt = id === "contact" ? A.t("chat.a.contact", contactVars) : A.t("chat.a." + id);
+    var v = variants(id), txt;
+    if (v.f || v.b) {
+      var one = ctx.site === "fresse" ? "f" : ctx.site === "bresse" ? "b" : null;
+      if (one) { if (!v[one]) return fallback(); txt = v[one]; }
+      else {
+        var parts = []; if (v.f) parts.push(A.t("chat.s.hF") + " : " + v.f); if (v.b) parts.push(A.t("chat.s.hB") + " : " + v.b);
+        txt = parts.join("\n\n");
+      }
+    } else txt = id === "contact" ? A.t("chat.a.contact", contactVars) : A.t("chat.a." + id);
     bubble(txt, "bot", acts.length ? actions(acts) : null);
   }
 
@@ -300,6 +317,8 @@
       var id = detect(text);
       if (tryCompute(text, id)) return;
       ctx.pending = false;
+      var ss = parseSlots(text);
+      if (ss.site) { if (ss.site === "fresse") { ctx.site = "fresse"; ctx.units = []; } else { ctx.site = "bresse"; ctx.units = ss.units || (ctx.site === "bresse" ? ctx.units : []); } }
       if (id) answer(id); else fallback();
     }, 350);
   }
