@@ -1,0 +1,9 @@
+{
+  "_aide": "Chaque période est [arrivée, départ] : les nuits de l'arrivée (incluse) au départ (exclu) sont indisponibles. Format AAAA-MM-JJ. Clés : fresse, m1, m2, m3, m4 (un logement de La Bresse), all (bloque tout La Bresse).",
+  "fresse": [],
+  "m1": [],
+  "m2": [],
+  "m3": [],
+  "m4": [],
+  "all": []
+}

@@ -1,0 +1,507 @@
+/* Gîtes BEL'M — logique principale (langue, galeries, visite, réservation) */
+(function () {
+  "use strict";
+  var C = window.BELM, D = window.I18N;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ------------------------------------------------------------------ */
+  /* Langue                                                              */
+  /* ------------------------------------------------------------------ */
+  var SUPPORTED = ["fr", "en", "de", "nl"];
+  var lang = "fr";
+
+  function detectLang() {
+    try { var s = localStorage.getItem("belm-lang"); if (SUPPORTED.indexOf(s) > -1) return s; } catch (e) {}
+    var list = navigator.languages || [navigator.language || "fr"];
+    for (var i = 0; i < list.length; i++) {
+      var l = String(list[i]).slice(0, 2).toLowerCase();
+      if (SUPPORTED.indexOf(l) > -1) return l;
+    }
+    return "fr";
+  }
+
+  function t(key, vars) {
+    var s = (D[lang] && D[lang][key]) || D.fr[key] || key;
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(vars[k]); });
+    return s;
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.title = t("meta.title");
+    $$("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
+    $$("[data-i18n-attr]").forEach(function (el) {
+      el.getAttribute("data-i18n-attr").split(";").forEach(function (pair) {
+        var p = pair.split(":"); if (p.length === 2) el.setAttribute(p[0].trim(), t(p[1].trim()));
+      });
+    });
+    var sel = $("#langSelect"); if (sel) sel.value = lang;
+  }
+
+  function setLang(l, persist) {
+    if (SUPPORTED.indexOf(l) < 0) l = "fr";
+    lang = l;
+    if (persist) { try { localStorage.setItem("belm-lang", l); } catch (e) {} }
+    applyI18n();
+    renderRates(); renderGalleryChips(); renderGallery(); renderChapters(); renderPlayerMsg();
+    renderCalendar(); updateEstimate(); updateFormMsgs();
+    document.dispatchEvent(new CustomEvent("belm:lang", { detail: { lang: lang } }));
+  }
+
+  var money = function (n) {
+    return new Intl.NumberFormat(lang, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Math.round(n));
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* En-tête, liens, visuels                                             */
+  /* ------------------------------------------------------------------ */
+  function initStatic() {
+    var burger = $("#burger"), nav = $("#nav");
+    burger.addEventListener("click", function () {
+      var open = nav.classList.toggle("is-open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    $$("a", nav).forEach(function (a) { a.addEventListener("click", function () { nav.classList.remove("is-open"); burger.setAttribute("aria-expanded", "false"); }); });
+
+    var hdr = $(".site-header");
+    var onScroll = function () { hdr.classList.toggle("is-stuck", window.scrollY > 24); };
+    window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+    $("#heroBg").style.backgroundImage = "url(" + C.hero.home + ")";
+    $("#imgFresse").style.backgroundImage = "url(" + C.hero.fresse + ")";
+    $("#imgBresse").style.backgroundImage = "url(" + C.hero.bresse + ")";
+    $("#posterBg").style.backgroundImage = "url(" + C.hero.fresse + ")";
+
+    $("#rvFresseAir").href = C.reviews.fresse.airbnb; $("#rvFresseGoo").href = C.reviews.fresse.google;
+    $("#rvBresseAir").href = C.reviews.bresse.airbnb; $("#rvBresseGoo").href = C.reviews.bresse.google;
+
+    var mail = $("#mailLink"); mail.href = "mailto:" + C.contact.email; mail.textContent = C.contact.email;
+    if (C.contact.phone) {
+      $("#phoneLine").hidden = false;
+      var p = $("#phoneLink"); p.href = "tel:" + C.contact.phone.replace(/\s+/g, ""); p.textContent = C.contact.phone;
+    }
+    $("#fbLink").href = C.contact.facebook; $("#ytLink").href = C.contact.youtubeChannel; $("#ytChannel").href = C.contact.youtubeChannel;
+    $("#addrBresse").textContent = C.contact.addresses.bresse; $("#addrFresse").textContent = C.contact.addresses.fresse;
+    var map = function (a) { return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(a); };
+    $("#mapBresse").href = map(C.contact.addresses.bresse); $("#mapFresse").href = map(C.contact.addresses.fresse);
+    $("#lgMentions").href = C.legal.mentions; $("#lgPrivacy").href = C.legal.privacy; $("#lgWithdraw").href = C.legal.withdrawal;
+    $("#year").textContent = new Date().getFullYear();
+
+    $("#langSelect").addEventListener("change", function (e) { setLang(e.target.value, true); });
+
+    $$("[data-book]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var r = $('input[name="site"][value="' + b.getAttribute("data-book") + '"]'); if (r) { r.checked = true; onSiteChange(); }
+        $("#reserver").scrollIntoView({ behavior: "smooth" });
+      });
+    });
+    $$("[data-open-gallery]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        setGallerySite(b.getAttribute("data-open-gallery"));
+        $("#photos").scrollIntoView({ behavior: "smooth" });
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Tarifs (tableau généré depuis config.js)                            */
+  /* ------------------------------------------------------------------ */
+  function renderRates() {
+    var P = C.pricing, tb = $("#rateTable tbody"); if (!tb) return;
+    var row = function (label, u) {
+      return "<tr><th scope='row'>" + label + "</th>" + ["low", "mid", "high"].map(function (s) {
+        return "<td><b>" + u[s][0] + "</b> <i>/</i> " + u[s][1] + " €</td>";
+      }).join("") + "</tr>";
+    };
+    tb.innerHTML =
+      row(t("u.m1") + " · " + t("u.m2"), P.units.m1) + row(t("u.m3"), P.units.m3) + row(t("u.m4"), P.units.m4);
+    var tw = $("#rateTable").parentNode, note = $("#cleanNote");
+    if (!note) { note = document.createElement("p"); note.id = "cleanNote"; note.className = "small"; tw.parentNode.insertBefore(note, tw.nextSibling); }
+    note.textContent = t("rates.cleaning") + " : " + t("u.m1") + "/" + t("u.m2") + " " + P.units.m1.cleaning + " € · " + t("u.m3") + " " + P.units.m3.cleaning + " € · " +
+      t("u.m4") + " " + P.units.m4.cleaning + " € · " + t("rates.entire") + " " + P.chalet.cleaning + " €";
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Galeries photos + lightbox                                          */
+  /* ------------------------------------------------------------------ */
+  var gal = { site: "fresse", cat: "all", items: [] };
+  var CATS = ["all", "exterieur", "piscine", "interieur", "chambres", "detente", "hiver"];
+
+  function altOf(p) { return D.fr[p.alt] ? t(p.alt) : (p.alt || ""); }
+
+  function setGallerySite(site) {
+    gal.site = site; gal.cat = "all";
+    $$("#galTabs .tab").forEach(function (b) {
+      var on = b.getAttribute("data-site") === site; b.classList.toggle("is-on", on); b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    renderGalleryChips(); renderGallery();
+  }
+
+  function renderGalleryChips() {
+    var list = C.photos[gal.site] || [], present = {};
+    list.forEach(function (p) { present[p.cat] = true; });
+    var box = $("#galChips"); box.innerHTML = "";
+    CATS.forEach(function (c) {
+      if (c !== "all" && !present[c]) return;
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip" + (gal.cat === c ? " is-on" : ""); b.textContent = t("cat." + c);
+      b.addEventListener("click", function () { gal.cat = c; renderGalleryChips(); renderGallery(); });
+      box.appendChild(b);
+    });
+  }
+
+  function renderGallery() {
+    var box = $("#gallery"); box.innerHTML = "";
+    var list = (C.photos[gal.site] || []).filter(function (p) { return gal.cat === "all" || p.cat === gal.cat; });
+    gal.items = [];
+    list.forEach(function (p, i) {
+      var item = { p: p, ok: null, el: null };
+      var fig = document.createElement("button");
+      fig.type = "button"; fig.className = "g-item" + (i % 7 === 0 ? " wide" : "");
+      var img = new Image(); img.loading = "lazy"; img.decoding = "async"; img.alt = altOf(p); img.src = p.src;
+      var cap = document.createElement("span"); cap.className = "g-cap"; cap.textContent = altOf(p);
+      img.addEventListener("load", function () { item.ok = true; fig.classList.add("is-ready"); });
+      img.addEventListener("error", function () {
+        item.ok = false; fig.classList.add("is-missing"); fig.disabled = true;
+        img.remove();
+        var ph = document.createElement("span"); ph.className = "g-ph";
+        ph.innerHTML = '<svg viewBox="0 0 64 40" width="54" aria-hidden="true"><path d="M2 38 20 12l10 14 8-10 24 22z" fill="currentColor" opacity=".35"/><circle cx="48" cy="9" r="5" fill="currentColor" opacity=".35"/></svg><em>' + t("gallery.placeholder") + "</em>";
+        fig.insertBefore(ph, cap);
+      });
+      fig.appendChild(img); fig.appendChild(cap);
+      fig.addEventListener("click", function () { if (item.ok) openLightbox(item); });
+      item.el = fig; gal.items.push(item); box.appendChild(fig);
+    });
+  }
+
+  var lb = { idx: 0, list: [] };
+  function openLightbox(item) {
+    lb.list = gal.items.filter(function (x) { return x.ok; });
+    lb.idx = Math.max(0, lb.list.indexOf(item));
+    $("#lightbox").hidden = false; document.body.classList.add("no-scroll");
+    showLb(); $("#lbClose").focus();
+  }
+  function showLb() {
+    var it = lb.list[lb.idx]; if (!it) return;
+    var img = $("#lbImg"); img.src = it.p.src; img.alt = altOf(it.p);
+    $("#lbCap").textContent = altOf(it.p) + "  ·  " + (lb.idx + 1) + " / " + lb.list.length;
+    var multi = lb.list.length > 1; $("#lbPrev").hidden = !multi; $("#lbNext").hidden = !multi;
+  }
+  function stepLb(d) { if (!lb.list.length) return; lb.idx = (lb.idx + d + lb.list.length) % lb.list.length; showLb(); }
+  function closeLb() { $("#lightbox").hidden = true; document.body.classList.remove("no-scroll"); $("#lbImg").src = ""; }
+
+  function initGallery() {
+    $$("#galTabs .tab").forEach(function (b) { b.addEventListener("click", function () { setGallerySite(b.getAttribute("data-site")); }); });
+    $("#lbClose").addEventListener("click", closeLb);
+    $("#lbPrev").addEventListener("click", function () { stepLb(-1); });
+    $("#lbNext").addEventListener("click", function () { stepLb(1); });
+    $("#lightbox").addEventListener("click", function (e) { if (e.target === this || e.target.classList.contains("lb-fig")) closeLb(); });
+    document.addEventListener("keydown", function (e) {
+      if ($("#lightbox").hidden) return;
+      if (e.key === "Escape") closeLb(); else if (e.key === "ArrowLeft") stepLb(-1); else if (e.key === "ArrowRight") stepLb(1);
+    });
+    var sx = null, box = $("#lightbox");
+    box.addEventListener("touchstart", function (e) { sx = e.changedTouches[0].clientX; }, { passive: true });
+    box.addEventListener("touchend", function (e) {
+      if (sx === null) return; var dx = e.changedTouches[0].clientX - sx; sx = null;
+      if (Math.abs(dx) > 50) stepLb(dx > 0 ? -1 : 1);
+    }, { passive: true });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Visite virtuelle (YouTube chargé uniquement après clic)             */
+  /* ------------------------------------------------------------------ */
+  var playerLoaded = false;
+  function loadVideo(start) {
+    if (!C.youtubeVideoId) return;
+    var box = $("#player");
+    var src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(C.youtubeVideoId) + "?autoplay=1&rel=0&modestbranding=1&start=" + (start || 0);
+    var f = $("iframe", box);
+    if (!f) {
+      f = document.createElement("iframe");
+      f.title = t("tour.title"); f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+      f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin"; box.appendChild(f);
+    }
+    f.src = src; box.classList.add("is-playing"); playerLoaded = true;
+  }
+  function renderPlayerMsg() {
+    var msg = $("#playerMsg"), btn = $("#playBtn");
+    if (C.youtubeVideoId) { msg.textContent = t("tour.consent"); btn.setAttribute("aria-label", t("tour.play")); btn.hidden = false; }
+    else { msg.textContent = t("tour.soon"); btn.hidden = true; }
+  }
+  function renderChapters() {
+    var box = $("#chapters"); box.innerHTML = "";
+    if (!C.youtubeVideoId) return;
+    (C.videoChapters || []).forEach(function (c) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = t("tour.chap." + c.label);
+      b.addEventListener("click", function () { loadVideo(c.t); $("#player").scrollIntoView({ behavior: "smooth", block: "center" }); });
+      box.appendChild(b);
+    });
+  }
+  function initTour() {
+    $("#playBtn").addEventListener("click", function () { loadVideo(0); });
+    $("#posterBg").addEventListener("click", function () { loadVideo(0); });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Réservation                                                         */
+  /* ------------------------------------------------------------------ */
+  var UNIT_KEYS = ["m1", "m2", "m3", "m4"];
+  var B = { site: "fresse", units: [], arrive: null, depart: null, view: null, avail: { fresse: [], m1: [], m2: [], m3: [], m4: [], all: [] }, err: "", errCode: "" };
+
+  // --- utilitaires de dates (UTC pour éviter les décalages d'heure d'été)
+  function iso(d) { return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0"); }
+  function parse(s) { var p = s.split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+  function addDays(s, n) { var d = parse(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); }
+  function diffDays(a, b) { return Math.round((parse(b) - parse(a)) / 86400000); }
+  function todayISO() { var n = new Date(); return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0"); }
+  function fmtDate(s) { return new Intl.DateTimeFormat(lang, { weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(parse(s)); }
+
+  function easter(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+      g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+      l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+      month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+    return y + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+  }
+  var holidayCache = {};
+  function holidays(y) {
+    if (holidayCache[y]) return holidayCache[y];
+    var e = easter(y), set = {};
+    ["01-01", "05-01", "05-08", "07-14", "08-15", "11-01", "11-11", "12-25"].forEach(function (md) { set[y + "-" + md] = 1; });
+    [1, 39, 50].forEach(function (n) { set[addDays(e, n)] = 1; });
+    return (holidayCache[y] = set);
+  }
+  function isHoliday(s) { return !!holidays(+s.slice(0, 4))[s]; }
+  function isWeekendNight(s) { var w = parse(s).getUTCDay(); return w === 5 || w === 6; }
+  function season(s) {
+    var md = s.slice(5);
+    for (var i = 0; i < C.seasons.length; i++) {
+      var r = C.seasons[i], inside = r.from <= r.to ? (md >= r.from && md <= r.to) : (md >= r.from || md <= r.to);
+      if (inside) return r.level;
+    }
+    return "low";
+  }
+
+  // --- disponibilités
+  function activeKeys() { return B.site === "fresse" ? ["fresse"] : (B.units.length === 4 ? ["all"].concat(UNIT_KEYS) : ["all"].concat(B.units)); }
+  function nightBusy(date) {
+    var keys = activeKeys();
+    for (var k = 0; k < keys.length; k++) {
+      var arr = B.avail[keys[k]] || [];
+      for (var i = 0; i < arr.length; i++) if (date >= arr[i][0] && date < arr[i][1]) return true;
+    }
+    return false;
+  }
+  function rangeFree(a, d) { for (var x = a; x < d; x = addDays(x, 1)) if (nightBusy(x)) return false; return true; }
+  function loadAvailability() {
+    fetch("data/availability.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j) return; Object.keys(B.avail).forEach(function (k) { if (Array.isArray(j[k])) B.avail[k] = j[k]; });
+      renderCalendar(); updateEstimate();
+    }).catch(function () { /* hors-ligne ou fichier absent : tout est libre */ });
+  }
+
+  // --- calendrier
+  function renderCalendar() {
+    var cal = $("#cal"); if (!cal) return;
+    if (!B.view) { var n = todayISO(); B.view = n.slice(0, 8) + "01"; }
+    var today = todayISO(), html = "";
+    var head = '<div class="cal-nav"><button type="button" class="cal-btn" id="calPrev" aria-label="' + t("book.prev") + '">‹</button><span></span><button type="button" class="cal-btn" id="calNext" aria-label="' + t("book.next") + '">›</button></div>';
+    var months = "";
+    for (var m = 0; m < 2; m++) {
+      var first = parse(B.view); first.setUTCMonth(first.getUTCMonth() + m); first.setUTCDate(1);
+      var title = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric", timeZone: "UTC" }).format(first);
+      var offset = (first.getUTCDay() + 6) % 7, dim = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+      var cells = "";
+      for (var w = 0; w < 7; w++) cells += '<span class="dow">' + new Intl.DateTimeFormat(lang, { weekday: "narrow", timeZone: "UTC" }).format(new Date(Date.UTC(2024, 0, 1 + w))) + "</span>";
+      for (var o = 0; o < offset; o++) cells += "<span></span>";
+      for (var d = 1; d <= dim; d++) {
+        var ds = iso(new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), d)));
+        var past = ds < today, busy = nightBusy(ds), cls = "day", dis = false;
+        var selecting = B.arrive && !B.depart;
+        if (past) { cls += " past"; dis = true; }
+        else if (selecting && ds > B.arrive) { if (rangeFree(B.arrive, ds)) { if (busy) cls += " edge"; } else { cls += " busy"; dis = true; } }
+        else if (busy) { cls += " busy"; dis = true; }
+        if (B.arrive && ds === B.arrive) cls += " sel start";
+        if (B.arrive && B.depart && ds > B.arrive && ds < B.depart) cls += " sel mid";
+        if (B.depart && ds === B.depart) cls += " sel end";
+        if (isWeekendNight(ds)) cls += " we";
+        cells += '<button type="button" class="' + cls + '" data-d="' + ds + '"' + (dis ? " disabled" : "") + ">" + d + "</button>";
+      }
+      months += '<div class="month"><p class="mtitle">' + title + '</p><div class="mgrid">' + cells + "</div></div>";
+    }
+    cal.innerHTML = head + '<div class="months">' + months + "</div>";
+    $("#calPrev").onclick = function () { var v = parse(B.view); v.setUTCMonth(v.getUTCMonth() - 1); if (iso(v) >= todayISO().slice(0, 8) + "01") { B.view = iso(v); renderCalendar(); } };
+    $("#calNext").onclick = function () { var v = parse(B.view); v.setUTCMonth(v.getUTCMonth() + 1); B.view = iso(v); renderCalendar(); };
+    $$(".day", cal).forEach(function (b) { b.addEventListener("click", function () { pickDay(b.getAttribute("data-d")); }); });
+    $("#outIn").textContent = B.arrive ? fmtDate(B.arrive) : "—";
+    $("#outOut").textContent = B.depart ? fmtDate(B.depart) : "—";
+  }
+
+  function pickDay(ds) {
+    if (!B.arrive || B.depart || ds <= B.arrive) { B.arrive = ds; B.depart = null; }
+    else if (rangeFree(B.arrive, ds)) { B.depart = ds; }
+    else { B.arrive = ds; B.depart = null; }
+    renderCalendar(); updateEstimate();
+  }
+
+  // --- estimation
+  function selectedUnits() { return B.site === "fresse" ? [] : B.units; }
+  function capacity() {
+    var P = C.pricing;
+    if (B.site === "fresse") return P.fresse.capacity;
+    if (B.units.length === 4) return P.chalet.capacity;
+    return Math.min(P.chalet.capacity, B.units.reduce(function (s, u) { return s + P.units[u].capacity; }, 0));
+  }
+  function minNights() {
+    var P = C.pricing.minNights;
+    if (B.site === "bresse") return P.bresse;
+    if (!B.arrive || !B.depart) return P.fresseStandard;
+    for (var x = B.arrive; x < B.depart; x = addDays(x, 1)) if (isWeekendNight(x) || isHoliday(x) || season(x) === "high") return P.fresseBusy;
+    return P.fresseStandard;
+  }
+
+  function compute(mode) { // mode : "season" | "low" | "high"
+    var P = C.pricing, nights = diffDays(B.arrive, B.depart), stay = 0, entire = B.site === "bresse" && B.units.length === 4;
+    for (var x = B.arrive; x < B.depart; x = addDays(x, 1)) {
+      var lvl = mode === "season" ? season(x) : mode, we = isWeekendNight(x) || isHoliday(x), nightly = 0;
+      if (B.site === "fresse") nightly = P.fresse[lvl];
+      else if (entire) nightly = P.chalet[lvl];
+      else B.units.forEach(function (u) { nightly += P.units[u][lvl][we ? 1 : 0]; });
+      stay += nightly;
+    }
+    var combo = 0;
+    if (B.site === "bresse" && !entire && B.units.length > 1) { combo = stay * P.combinationDiscount; stay -= combo; }
+    var disc = 0; if (nights >= 14) disc = stay * P.twoWeeksDiscount; else if (nights >= 7) disc = stay * P.weekDiscount;
+    var cleaning = B.site === "fresse" ? P.fresse.cleaning : entire ? P.chalet.cleaning : Math.min(P.chalet.cleaning, B.units.reduce(function (s, u) { return s + P.units[u].cleaning; }, 0));
+    var guests = Math.max(1, parseInt($("#guests").value, 10) || 1), linen = guests * P.linenPerPerson;
+    return { nights: nights, stay: stay + combo, combo: combo, disc: disc, cleaning: cleaning, linen: linen, total: stay - disc + cleaning + linen };
+  }
+
+  function validateSelection() {
+    B.err = ""; B.errCode = "";
+    var g = parseInt($("#guests").value, 10) || 0;
+    if (B.site === "bresse" && !B.units.length) { B.errCode = "units"; B.err = t("book.err.units"); return false; }
+    if (B.arrive && B.depart) {
+      var n = diffDays(B.arrive, B.depart), mn = minNights();
+      if (n < mn) { B.errCode = "min"; B.err = t("book.err.min", { n: mn }); return false; }
+      if (!rangeFree(B.arrive, B.depart)) { B.errCode = "busy"; B.err = t("book.err.busy"); return false; }
+    }
+    if (B.site === "fresse" || B.units.length) { var cap = capacity(); if (g > cap) { B.errCode = "cap"; B.err = t("book.err.cap", { n: cap }); return false; } }
+    return true;
+  }
+
+  function airbnbHref() {
+    var A = C.airbnb; if (B.site === "fresse") return A.fresse;
+    if (B.units.length === 1) return A[B.units[0]];
+    if (B.units.length === 2 && B.units.indexOf("m3") > -1 && B.units.indexOf("m4") > -1) return A.m34;
+    return A.chalet;
+  }
+
+  function updateEstimate() {
+    var box = $("#estBody"); if (!box) return;
+    $("#airbnbLink").href = airbnbHref();
+    $("#sendBtn").disabled = false;
+    var ok = validateSelection(), e = $("#formErr");
+    e.hidden = !B.err; e.textContent = B.err;
+    if (!B.arrive || !B.depart) { box.innerHTML = '<p class="muted">' + t("book.est.empty") + "</p>"; return; }
+    if (B.site === "bresse" && !B.units.length) { box.innerHTML = ""; return; }
+    var r = compute("season"), nl = r.nights + " " + (r.nights > 1 ? t("book.nights") : t("book.night"));
+    var rows = '<p class="est-dates">' + fmtDate(B.arrive) + " → " + fmtDate(B.depart) + " · <b>" + nl + "</b></p><dl class='est'>";
+    rows += "<dt>" + t("book.est.stay") + "</dt><dd>" + money(r.stay) + "</dd>";
+    if (r.combo) rows += "<dt>" + t("book.est.combo") + "</dt><dd>− " + money(r.combo) + "</dd>";
+    if (r.disc) rows += "<dt>" + t("book.est.disc") + "</dt><dd>− " + money(r.disc) + "</dd>";
+    rows += "<dt>" + t("book.est.cleaning") + "</dt><dd>" + money(r.cleaning) + "</dd>";
+    rows += "<dt>" + t("book.est.linen") + "</dt><dd>" + money(r.linen) + "</dd></dl>";
+    var banded = B.site === "fresse" || B.units.length === 4;
+    if (banded) { var lo = compute("low"), hi = compute("high"); rows += '<p class="est-total"><span>' + t("book.est.total") + "</span><b>" + money(r.total) + "</b></p><p class='small'>" + t("book.est.range") + " " + money(lo.total) + " – " + money(hi.total) + "</p>"; }
+    else rows += '<p class="est-total"><span>' + t("book.est.total") + "</span><b>" + money(r.total) + "</b></p>";
+    rows += '<p class="small">' + t("book.est.note") + "</p>";
+    box.innerHTML = rows;
+    $("#sendBtn").disabled = !ok;
+  }
+
+  function onSiteChange() {
+    B.site = $('input[name="site"]:checked').value;
+    $("#unitsBox").hidden = B.site !== "bresse";
+    if (B.site === "bresse" && !B.units.length) { B.units = ["m3"]; syncUnitBoxes(); }
+    B.arrive = null; B.depart = null; renderCalendar(); updateEstimate();
+  }
+  function syncUnitBoxes() { $$('input[name="unit"]').forEach(function (c) { c.checked = B.units.indexOf(c.value) > -1; }); }
+  function onUnitsChange() {
+    B.units = $$('input[name="unit"]:checked').map(function (c) { return c.value; });
+    if (B.arrive && B.depart && !rangeFree(B.arrive, B.depart)) { B.arrive = null; B.depart = null; }
+    renderCalendar(); updateEstimate();
+  }
+
+  // --- envoi
+  var formState = "";
+  function updateFormMsgs() { /* messages d'état retraduits */
+    var ok = $("#formOk"); if (!ok || !formState) return;
+    ok.textContent = formState === "ok" ? t("book.ok") : formState === "mail" ? t("book.mail") : t("book.fail", { mail: C.contact.email });
+  }
+  function payloadText(p) {
+    var L = [
+      "Demande de réservation — site Gîtes BEL'M", "",
+      "Lieu : " + (p.site === "fresse" ? "Fresse-sur-Moselle (BEL'M Amiral)" : "La Bresse — " + (p.units.length === 4 ? "chalet entier" : p.units.join(", ").toUpperCase())),
+      "Arrivée : " + p.arrive, "Départ : " + p.depart, "Nuits : " + p.nights, "Voyageurs : " + p.guests,
+      "Options : " + (p.options.length ? p.options.join(", ") : "aucune"),
+      "Estimation : " + Math.round(p.estimate) + " €", "",
+      "Nom : " + p.name, "E-mail : " + p.email, "Téléphone : " + (p.phone || "—"), "Langue du visiteur : " + p.lang, "", "Message : " + (p.message || "—")
+    ];
+    return L.join("\n");
+  }
+
+  function submitForm(ev) {
+    ev.preventDefault();
+    var f = ev.target, e = $("#formErr"), ok = $("#formOk"); ok.hidden = true; formState = "";
+    var fail = function (m) { e.hidden = false; e.textContent = m; };
+    if (f.elements._gotcha.value) { formState = "ok"; ok.hidden = false; updateFormMsgs(); return; }
+    if (B.site === "bresse" && !B.units.length) return fail(t("book.err.units"));
+    if (!B.arrive || !B.depart) return fail(t("book.err.dates"));
+    if (!validateSelection()) return fail(B.err);
+    var name = f.elements.name.value.trim(), email = f.elements.email.value.trim();
+    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(t("book.err.fields"));
+    var est = compute("season");
+    var p = {
+      site: B.site, units: B.site === "bresse" ? B.units.slice() : [], arrive: B.arrive, depart: B.depart, nights: est.nights,
+      guests: parseInt(f.elements.guests.value, 10) || 1, options: $$('input[name="opt"]:checked').map(function (c) { return c.value; }),
+      estimate: est.total, name: name, email: email, phone: f.elements.phone.value.trim(), message: f.elements.message.value.trim(), lang: lang
+    };
+    e.hidden = true;
+    var done = function (state) { formState = state; ok.hidden = false; updateFormMsgs(); };
+    if (C.formEndpoint) {
+      $("#sendBtn").disabled = true;
+      fetch(C.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ name: p.name, email: p.email, _replyto: p.email, _subject: "Demande de réservation BEL'M — " + p.arrive + " → " + p.depart, message: payloadText(p) }) })
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); done("ok"); f.reset(); B.arrive = B.depart = null; syncUnitBoxes(); renderCalendar(); updateEstimate(); })
+        .catch(function () { done("fail"); })
+        .then(function () { $("#sendBtn").disabled = false; });
+    } else {
+      var href = "mailto:" + C.contact.email + "?subject=" + encodeURIComponent("Demande de réservation BEL'M — " + p.arrive + " → " + p.depart) + "&body=" + encodeURIComponent(payloadText(p));
+      done("mail"); window.location.href = href;
+    }
+  }
+
+  function initBooking() {
+    $$('input[name="site"]').forEach(function (r) { r.addEventListener("change", onSiteChange); });
+    $$('input[name="unit"]').forEach(function (c) { c.addEventListener("change", onUnitsChange); });
+    $("#allUnits").addEventListener("click", function () { B.units = UNIT_KEYS.slice(); syncUnitBoxes(); onUnitsChange(); });
+    $("#clearDates").addEventListener("click", function () { B.arrive = B.depart = null; renderCalendar(); updateEstimate(); });
+    $("#guests").addEventListener("input", updateEstimate);
+    $("#bookForm").addEventListener("submit", submitForm);
+    loadAvailability();
+  }
+
+  /* ------------------------------------------------------------------ */
+  window.BelmApp = { t: function (k, v) { return t(k, v); }, lang: function () { return lang; } };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initStatic(); initGallery(); initTour(); initBooking();
+    lang = detectLang();
+    setLang(lang, false);
+    setGallerySite("fresse");
+    onSiteChange();
+  });
+})();
