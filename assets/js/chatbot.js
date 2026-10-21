@@ -6,6 +6,7 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "tv",      kw: ["tv", "television", "tele", "netflix", "molotov", "chaine tv", "chaines tv", "chaines", "streaming", "fernseher", "fernsehen", "tv-sender", "televisie", "zenders"] },
     { id: "laundry", kw: ["lave-linge", "lave linge", "laverie", "machine a laver", "seche-linge", "seche linge", "washing machine", "laundry", "dryer", "washer", "waschmaschine", "trockner", "wasmachine", "droger", "wasserette"] },
     { id: "games",   kw: ["billard", "babyfoot", "escape game", "escape", "flechette", "flechettes", "jeux", "jeu de societe", "salle de sport", "fitness", "gym", "darts", "pool table", "board games", "games", "table football", "kicker", "tischkicker", "billiard", "dart", "gesellschaftsspiele", "spiele", "fitnessraum", "biljart", "tafelvoetbal", "spelletjes", "gezelschapsspellen", "fitnessruimte"] },
     { id: "parking", kw: ["parking", "se garer", "garer", "stationnement", "park", "parkplatz", "parkeren", "parkeerplaats"] },
