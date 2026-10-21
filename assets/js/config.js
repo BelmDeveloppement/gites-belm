@@ -23,7 +23,7 @@ window.BELM = {
 
   // ---- Visite virtuelle du BEL'M Amiral (YouTube) ----
   // Collez l'identifiant de la vidéo : youtube.com/watch?v=XXXXXXXXXXX → "XXXXXXXXXXX"
-  youtubeVideoId: "",
+  youtubeVideoId: "acCizWG_uLM",
   // Chapitres facultatifs (secondes) pour sauter à une pièce : { label: "piscine", t: 95 }
   // `label` est une clé de traduction (voir i18n.js, rubrique "tour.chap.*").
   videoChapters: [
