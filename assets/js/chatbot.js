@@ -6,6 +6,14 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "cleaning", kw: ["menage", "avant de partir", "poubelle", "poubelles", "vaisselle", "cleaning", "before leaving", "rubbish", "trash", "garbage", "dishes", "reinigung", "endreinigung", "muell", "mull", "schoonmaak", "afval", "afwas"] },
+    { id: "wifi",    kw: ["wifi", "wi-fi", "wlan", "internet", "teletravail", "debit", "remote work", "work from home", "home office", "homeoffice", "thuiswerken", "bandwidth"] },
+    { id: "checkin", kw: ["cle", "cles", "clef", "clefs", "boite a cles", "conciergerie", "concierge", "accueil", "key", "keys", "key box", "keybox", "schlussel", "schluessel", "schlusselkasten", "sleutel", "sleutels", "sleutelkluisje", "welcome"] },
+    { id: "shops",   kw: ["courses", "supermarche", "boulangerie", "commerce", "commerces", "magasin", "epicerie", "grocery", "groceries", "supermarket", "bakery", "shops", "shopping", "einkaufen", "supermarkt", "backerei", "baeckerei", "bakker", "winkel", "boodschappen"] },
+    { id: "heating", kw: ["chauffage", "chauffe", "poele", "cheminee", "heating", "heater", "stove", "fireplace", "heizung", "ofen", "kamin", "verwarming", "kachel", "haard"] },
+    { id: "tax",     kw: ["taxe", "taxes", "tourist tax", "city tax", "kurtaxe", "toeristenbelasting"] },
+    { id: "direct",  kw: ["en direct", "book direct", "direct booking", "direct boeken", "direktbuchung", "airbnb", "commission", "service fee", "frais de service", "moins cher", "pas cher", "cheaper", "best price", "meilleur prix", "meilleur tarif", "plateforme", "platform", "plattform"] },
+    { id: "meals",   kw: ["petit dejeuner", "petit-dejeuner", "breakfast", "repas", "diner", "dejeuner", "meal", "meals", "dinner", "lunch", "fruhstuck", "fruehstuck", "abendessen", "mittagessen", "ontbijt", "demi-pension", "half board", "halbpension", "halfpension"] },
     { id: "pets",    kw: ["chien", "chiens", "animal", "animaux", "chat accepte", "toutou", "dog", "dogs", "pets", "my pet", "haustier", "haustiere", "hund", "hunde", "katze", "katzen", "huisdier", "huisdieren", "hond", "honden", "katten"] },
     { id: "party",   kw: ["fete", "fetes", "anniversaire", "soiree", "mariage", "evenement", "bruit", "party", "parties", "birthday", "wedding", "noise", "feier", "feiern", "geburtstag", "hochzeit", "larm", "feest", "feesten", "verjaardag", "bruiloft", "lawaai"] },
     { id: "payment", kw: ["acompte", "paiement", "payer", "virement", "solde", "carte bancaire", "payment", "how to pay", "bezahlen", "zahlung", "anzahlung", "betalen", "betaling", "aanbetaling", "voorschot"] },
@@ -262,6 +270,7 @@
     if (id === "rates") acts = [{ label: A.t("nav.rates"), href: "tarifs.html", close: true }, { label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
     else if (id === "book" || id === "min") acts = [{ label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
     else if (id === "pool" || id === "cap") acts = [{ label: A.t("nav.gallery"), href: "photos.html", close: true }];
+    else if (id === "direct") acts = [{ label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
     else if (["pets", "pmr", "late", "baby", "cancel", "payment", "caution"].indexOf(id) > -1) acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "contact") acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "where") acts = [{ label: A.t("nav.contact"), href: "contact.html", close: true }];
