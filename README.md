@@ -10,7 +10,7 @@ Site statique (HTML / CSS / JavaScript, **sans outil de build, sans cookie, sans
 | Site en plusieurs pages | Une page par rubrique du menu, en-tête et pied de page communs, langue conservée d'une page à l'autre |
 | Système de réservation | Calendrier de disponibilités, choix du chalet / des logements, estimation du prix en direct (saisons, week-ends/fériés, remises, ménage, draps), contrôle des durées minimales et de la capacité, envoi de la demande par e-mail |
 | Galeries plus attrayantes | Grille en mosaïque, filtres par thème (extérieur, piscine, intérieur…), agrandissement plein écran (clavier, glissement tactile), chargement différé |
-| Chatbot | Assistant FAQ dans le coin de l'écran (tarifs, capacité, horaires, piscine/sauna, ski, activités…), + lien vers l'assistant Botpress existant pour les questions plus fines |
+| Chatbot | Assistant dans le coin de l'écran : comprend les dates, le nombre de personnes et le logement (FR/EN/DE/NL), vérifie les disponibilités, calcule le prix, propose des dates proches si c'est pris et pré-remplit la réservation ; FAQ pour le reste |
 | Visite virtuelle de Fresse | Visite interactive tirée de votre vidéo : 17 pièces cliquables avec vignettes, lecteur vertical, frise de progression et pièce « en cours » synchronisée avec la lecture, filtres par zone (extérieur, rez-de-chaussée, étage, espace détente). YouTube n'est chargé (sans cookie) qu'au clic |
 | Choix de la langue | Français, English, Deutsch, Nederlands — détection automatique du navigateur, mémorisée |
 

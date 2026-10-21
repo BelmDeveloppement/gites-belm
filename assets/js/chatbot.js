@@ -39,6 +39,192 @@
 
   var logEl, quickEl, panel, fab, inputEl, started = false;
 
+  /* ---------------- Compréhension des dates, personnes et logements ---------------- */
+  var MONTHS = {
+    janvier: 1, fevrier: 2, mars: 3, avril: 4, mai: 5, juin: 6, juillet: 7, aout: 8, septembre: 9, octobre: 10, novembre: 11, decembre: 12,
+    janv: 1, fevr: 2, avr: 4, juil: 7, sept: 9,
+    january: 1, february: 2, march: 3, april: 4, june: 6, july: 7, august: 8, october: 10, december: 12,
+    januar: 1, februar: 2, marz: 3, maerz: 3, juni: 6, juli: 7, oktober: 10, dezember: 12,
+    januari: 1, februari: 2, maart: 3, mei: 5, augustus: 8,
+    jan: 1, feb: 2, fev: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, okt: 10, nov: 11, dec: 12, dez: 12
+  };
+  var MKEYS = Object.keys(MONTHS).sort(function (a, b) { return b.length - a.length; });
+  var M = MKEYS.join("|");
+  var MFULL = MKEYS.filter(function (k) { return k.length >= 4 || k === "mai" || k === "mei"; }).join("|");
+  var ORD = "(?:er|st|nd|rd|th|\\.)?";
+  var RANGE_RE = new RegExp("(\\d{1,2})" + ORD + "\\s*(?:au|a|to|bis|tot|et|-|–|→|until|till|jusqu'au)\\s*(\\d{1,2})" + ORD + "\\s*(?:de\\s+|of\\s+)?(" + M + ")\\b\\.?(?:\\s*(\\d{4}))?");
+  var TOK_RE = new RegExp("(\\d{4})-(\\d{2})-(\\d{2})|(\\d{1,2})" + ORD + "\\s*(?:de\\s+|of\\s+)?(" + M + ")\\b\\.?(?:\\s*(\\d{4}))?|(" + M + ")\\b\\.?\\s*(\\d{1,2})(?:st|nd|rd|th)?\\b(?:,?\\s*(\\d{4}))?|(\\d{1,2})[\\/.](\\d{1,2})(?:[\\/.](\\d{2,4}))?", "g");
+  var MONTH_ONLY_RE = new RegExp("\\b(" + MFULL + ")\\b\\.?(?:\\s*(\\d{4}))?");
+  var AVAIL_RE = /\b(libres?|dispo\w*|available|availability|free|vacant|verfugbar|frei|beschikbaar|vrij|open)\b/;
+
+  function mk(y, m, d) { var dt = new Date(Date.UTC(y, m - 1, d)); return (dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d) ? A.iso(dt) : null; }
+  function resolve(d, m, y, after) {
+    var today = A.today(), c;
+    if (y) return mk(y < 100 ? 2000 + y : y, m, d);
+    var base = +(after || today).slice(0, 4); c = mk(base, m, d); if (!c) return null;
+    if (after) { if (c <= after) c = mk(base + 1, m, d); } else if (c < today) c = mk(base + 1, m, d);
+    return c;
+  }
+  function nextFriday() { var d = A.parse(A.today()), add = ((5 - d.getUTCDay()) + 7) % 7 || 7; return A.addDays(A.today(), add); }
+
+  function parseSlots(raw) {
+    var q = norm(raw), out = { arrive: null, depart: null, nights: null, guests: null, site: null, units: null, entire: false, month: null }, m, x;
+    // week-end
+    var we = /\b(week-?end|wochenende)\b/.test(q); if (we) q = q.replace(/\b(week-?end|wochenende)\b/g, " ");
+    // dates
+    if ((m = RANGE_RE.exec(q))) {
+      var mo = MONTHS[m[3]], a = resolve(+m[1], mo, m[4] ? +m[4] : null, null);
+      if (a) { var d2 = resolve(+m[2], mo, m[4] ? +m[4] : null, a); if (d2 && d2 <= a) { var nm = mo % 12 + 1; d2 = mk(+a.slice(0, 4) + (mo === 12 ? 1 : 0), nm, +m[2]); } out.arrive = a; out.depart = d2; }
+      q = q.replace(RANGE_RE, " ");
+    } else {
+      var found = [];
+      TOK_RE.lastIndex = 0;
+      while ((x = TOK_RE.exec(q))) {
+        if (x[1]) found.push({ y: +x[1], m: +x[2], d: +x[3] });
+        else if (x[4]) found.push({ d: +x[4], m: MONTHS[x[5]], y: x[6] ? +x[6] : null });
+        else if (x[7]) found.push({ d: +x[8], m: MONTHS[x[7]], y: x[9] ? +x[9] : null });
+        else if (x[10] && +x[11] >= 1 && +x[11] <= 12) found.push({ d: +x[10], m: +x[11], y: x[12] ? +x[12] : null });
+      }
+      if (found.length) {
+        out.arrive = resolve(found[0].d, found[0].m, found[0].y, null);
+        if (found.length > 1 && out.arrive) { out.depart = resolve(found[1].d, found[1].m, found[1].y, out.arrive); if (out.depart && out.depart <= out.arrive) out.depart = null; }
+      }
+    }
+    if (!out.arrive) {
+      if (/\b(noel|christmas|weihnacht\w*|kerst\w*)\b/.test(q)) { var y1 = +A.today().slice(0, 4), c = mk(y1, 12, 24); if (c < A.today()) c = mk(y1 + 1, 12, 24); out.arrive = c; out.depart = A.addDays(c, 3); }
+      else if (/(nouvel an|new year|silvester|nieuwjaar|reveillon)/.test(q)) { var y2 = +A.today().slice(0, 4), c2 = mk(y2, 12, 30); if (c2 < A.today()) c2 = mk(y2 + 1, 12, 30); out.arrive = c2; out.depart = A.addDays(c2, 3); }
+      else if (we) { out.arrive = nextFriday(); out.depart = A.addDays(out.arrive, 2); }
+      else if ((m = MONTH_ONLY_RE.exec(q))) { var mm = MONTHS[m[1]], yy = m[2] ? +m[2] : +A.today().slice(0, 4); if (!m[2] && mk(yy, mm, 28) < A.today()) yy++; out.month = { y: yy, m: mm }; }
+    }
+    // nuits / semaines
+    if ((m = /(\d{1,2})\s*(?:nuits?|nights?|nachte|nacht|naechte|nachten)\b/.exec(q))) out.nights = +m[1];
+    else if ((m = /\b(\d{1,2}|une?|one|eine?|een|deux|two|zwei|twee)\s+(?:semaines?|weeks?|wochen?)\b/.exec(q))) out.nights = 7 * ({ un: 1, une: 1, one: 1, ein: 1, eine: 1, een: 1, deux: 2, two: 2, zwei: 2, twee: 2 }[m[1]] || +m[1]);
+    else if (/\b(semaine|week|woche)\b/.test(q)) out.nights = 7;
+    if (out.arrive && !out.depart && out.nights) out.depart = A.addDays(out.arrive, out.nights);
+    // personnes
+    var g = 0, gm, re1 = /(\d{1,2})\s*(?:personnes?|pers\b|people|persons?|guests?|adults?|adultes?|personen|gaste|gaeste|leute|pax|mensen|volwassenen|erwachsene|enfants?|kids?|children|child|kinder|kinderen|ados?)/g;
+    while ((gm = re1.exec(q))) g += +gm[1];
+    if (!g && (gm = /(?:famille|groupe|group|gruppe|groep|family|familie)\s+(?:de\s+|of\s+|von\s+|van\s+)?(\d{1,2})\b/.exec(q))) g = +gm[1];
+    if (!g && (gm = new RegExp("\\b(?:pour|for|fur|fuer|voor|avec|with|mit|met|nous sommes|we are|wir sind|we zijn|on est)\\s+(\\d{1,2})\\b(?!\\s*(?:nuit|night|nacht|nachten|jour|day|tag|dag|semaine|week|woche|[\\/.]\\d|h\\b|" + M + "))").exec(q))) g = +gm[1];
+    if (g > 0 && g <= 40) out.guests = g;
+    // logement
+    var us = {}, um;
+    var ure = /bel'?\s*m\s*([1-4])((?:\s*(?:,|et|and|und|en|\+|&|\/)\s*[1-4]\b)*)/g;
+    while ((um = ure.exec(q))) { us[um[1]] = 1; (um[2].match(/[1-4]/g) || []).forEach(function (d) { us[d] = 1; }); }
+    var uk = Object.keys(us).sort().map(function (d) { return "m" + d; });
+    var iF = q.search(/fresse|amiral|frenat/), iB = q.search(/bresse|brabant/);
+    out.entire = /(chalet (entier|complet)|(entire|whole|complete|full) chalet|ganze[sn]? chalet|hele? chalet|les 4 (logements|gites)|all 4|alle 4|tous les (logements|gites))/.test(q);
+    if (uk.length) { out.site = "bresse"; out.units = uk; }
+    else if (out.entire && !(iF > -1 && iB < 0)) { out.site = "bresse"; out.units = ["m1", "m2", "m3", "m4"]; }
+    else if (iF > -1 && iB > -1) out.site = iF > iB ? "fresse" : "bresse";
+    else if (iF > -1) out.site = "fresse";
+    else if (iB > -1) out.site = "bresse";
+    out.any = !!(out.arrive || out.nights || out.guests || out.site || out.month);
+    return out;
+  }
+
+  /* ---------------- Contexte de conversation et réponses calculées ---------------- */
+  var ctx = { site: null, units: [], arrive: null, depart: null, guests: null, month: null, pending: false };
+
+  function where(c) {
+    if (c.site === "fresse") return A.t("chat.s.wFresse");
+    if (c.units.length === 4) return A.t("chat.s.wAll");
+    return A.t("chat.s.wUnits", { list: c.units.map(function (u) { return u.slice(1); }).join(" + ") });
+  }
+  function chips(list) { return actions(list.map(function (o) { return { label: o.label, on: o.on }; })); }
+  function userSays(label) { bubble(label, "user"); }
+
+  function askSite() {
+    ctx.pending = true;
+    function pick(site, units, label) { return { label: label, on: function () { userSays(label); ctx.site = site; ctx.units = units; run(); } }; }
+    var opts = [pick("fresse", [], A.t("chat.s.optFresse")), pick("bresse", ["m1", "m2", "m3", "m4"], A.t("chat.s.optAll"))];
+    ["m1", "m2", "m3", "m4"].forEach(function (u) { opts.push(pick("bresse", [u], A.t("chat.s.optM", { n: u.slice(1) }))); });
+    bubble(A.t("chat.s.askSite"), "bot", chips(opts));
+  }
+  function askNights() {
+    ctx.pending = true;
+    var opts = [2, 3, 5, 7].map(function (n) { var l = A.t("chat.s.nightsChip", { n: n }); return { label: l, on: function () { userSays(l); ctx.depart = A.addDays(ctx.arrive, n); run(); } }; });
+    bubble(A.t("chat.s.askNights", { from: A.fmtDate(ctx.arrive) }), "bot", chips(opts));
+  }
+
+  function monthAnswer() {
+    var mo = ctx.month, pad = function (n) { return String(n).padStart(2, "0"); };
+    var start = mo.y + "-" + pad(mo.m) + "-01", end = (mo.m === 12 ? (mo.y + 1) + "-01" : mo.y + "-" + pad(mo.m + 1)) + "-01";
+    if (start < A.today()) start = A.today();
+    var name = new Intl.DateTimeFormat(A.lang(), { month: "long", year: "numeric", timeZone: "UTC" }).format(A.parse(mo.y + "-" + pad(mo.m) + "-01"));
+    var busy = start < end ? A.busyIn({ site: ctx.site, units: ctx.units }, start, end) : [];
+    var lines = [A.t("chat.s.monthHead", { where: where(ctx), month: name })];
+    if (!busy.length) lines.push(A.t("chat.s.monthFree"));
+    else busy.forEach(function (b) { lines.push("• " + A.t("chat.s.monthBusy", { from: A.fmtDate(b[0]), to: A.fmtDate(b[1]) })); });
+    ctx.pending = false; ctx.month = null;
+    bubble(lines.join("\n"), "bot", actions([{ label: A.t("chat.bookBtn"), href: "reservation.html?site=" + ctx.site + (ctx.site === "bresse" ? "&units=" + ctx.units.join(",") : ""), close: true }]));
+  }
+
+  function quoteAnswer() {
+    var req = { site: ctx.site, units: ctx.units, arrive: ctx.arrive, depart: ctx.depart, guests: ctx.guests };
+    var r = A.quote(req), W = where(ctx), lines = [], acts = [];
+    if (r.past) { ctx.arrive = ctx.depart = null; ctx.pending = true; bubble(A.t("chat.s.past"), "bot"); return; }
+    var span = { from: A.fmtDate(ctx.arrive), to: A.fmtDate(ctx.depart), n: r.nights, where: W };
+    if (r.free) lines.push(A.t("chat.s.free", span));
+    else {
+      lines.push(A.t("chat.s.busy", span));
+      lines.push(r.alts.length ? A.t("chat.s.alt") : A.t("chat.s.noalt"));
+      r.alts.forEach(function (a) {
+        var l = A.t("chat.s.pickAlt", { from: A.fmtDate(a[0]), to: A.fmtDate(a[1]) });
+        acts.push({ label: l, on: function () { userSays(l); ctx.arrive = a[0]; ctx.depart = a[1]; run(); } });
+      });
+    }
+    if (r.tooShort) lines.push(A.t("chat.s.min", { n: r.minNights }));
+    if (r.overCap) lines.push(A.t("chat.s.cap", { n: r.capacity, where: W }));
+    if (r.free) {
+      var P = C.pricing, g = ctx.guests, c = r.r, adj = g ? 0 : P.linenPerPerson;
+      lines.push("");
+      lines.push(A.t("book.est.stay") + " : " + A.money(c.stay));
+      if (c.combo) lines.push(A.t("book.est.combo") + " : − " + A.money(c.combo));
+      if (c.disc) lines.push(A.t("book.est.disc") + " : − " + A.money(c.disc));
+      lines.push(A.t("book.est.cleaning") + " : " + A.money(c.cleaning));
+      lines.push(g ? A.t("book.est.linen") + " (" + g + ") : " + A.money(c.linen) : A.t("chat.s.linenOnly"));
+      lines.push("➡️ " + A.t("book.est.total") + " : " + A.money(c.total - adj));
+      if (r.banded) lines.push(A.t("book.est.range") + " " + A.money(r.lo.total - adj) + " – " + A.money(r.hi.total - adj));
+      lines.push(A.t("chat.s.note"));
+      var url = "reservation.html?site=" + ctx.site + (ctx.site === "bresse" ? "&units=" + ctx.units.join(",") : "") + "&from=" + ctx.arrive + "&to=" + ctx.depart + (g ? "&guests=" + g : "");
+      acts.push({ label: A.t("chat.s.cta"), href: url, close: true });
+    }
+    ctx.pending = false;
+    bubble(lines.join("\n"), "bot", acts.length ? actions(acts) : null);
+  }
+
+  function run() {
+    if (!ctx.site || (ctx.site === "bresse" && !ctx.units.length)) return askSite();
+    if (!ctx.arrive && ctx.month) return monthAnswer();
+    if (!ctx.arrive) { ctx.pending = true; return bubble(A.t("chat.s.askDates"), "bot"); }
+    if (!ctx.depart) return askNights();
+    quoteAnswer();
+  }
+
+  // Fusionne les infos du message dans le contexte ; renvoie true si l'assistant calcule une réponse.
+  function tryCompute(text, id) {
+    var s = parseSlots(text);
+    if (!s.any) return false;
+    var hadDates = !!(ctx.arrive && ctx.depart), hasDate = !!s.arrive;
+    var info = id && ["rates", "book", "min", "cap"].indexOf(id) < 0;
+    var q = norm(text);
+    var trigger = hasDate ||
+      (ctx.pending && !info) ||
+      (hadDates && (s.guests || s.nights || s.site || s.units) && !info) ||
+      (s.month && (AVAIL_RE.test(q) || id === "book" || id === "rates")) ||
+      ((id === "rates" || id === "book") && (s.guests || s.nights)) ||
+      ((s.site || s.units) && AVAIL_RE.test(q) && !info);
+    if (!trigger) return false;
+    if (s.site) { if (s.site !== ctx.site || s.units) ctx.units = s.units || (s.site === "bresse" && s.site === ctx.site ? ctx.units : []); ctx.site = s.site; if (s.site === "fresse") ctx.units = []; }
+    if (s.guests) ctx.guests = s.guests;
+    if (hasDate) { ctx.arrive = s.arrive; ctx.depart = s.depart; ctx.month = null; }
+    else if (s.nights && ctx.arrive) ctx.depart = A.addDays(ctx.arrive, s.nights);
+    if (s.month && !hasDate) { ctx.month = s.month; ctx.arrive = ctx.depart = null; }
+    run(); return true;
+  }
+
+
   function bubble(text, who, extra) {
     var d = document.createElement("div"); d.className = "msg " + who;
     var p = document.createElement("p"); p.textContent = text; d.appendChild(p);
@@ -83,7 +269,10 @@
     var typing = bubble("…", "bot typing");
     setTimeout(function () {
       typing.remove();
-      var id = detect(text); if (id) answer(id); else fallback();
+      var id = detect(text);
+      if (tryCompute(text, id)) return;
+      ctx.pending = false;
+      if (id) answer(id); else fallback();
     }, 350);
   }
 

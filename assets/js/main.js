@@ -483,7 +483,7 @@
     return P.fresseStandard;
   }
 
-  function compute(mode) { // mode : "season" | "low" | "high"
+  function compute(mode, guestsOverride) { // mode : "season" | "low" | "high"
     var P = C.pricing, nights = diffDays(B.arrive, B.depart), stay = 0, entire = B.site === "bresse" && B.units.length === 4;
     for (var x = B.arrive; x < B.depart; x = addDays(x, 1)) {
       var lvl = mode === "season" ? season(x) : mode, we = isWeekendNight(x) || isHoliday(x), nightly = 0;
@@ -496,13 +496,13 @@
     if (B.site === "bresse" && !entire && B.units.length > 1) { combo = stay * P.combinationDiscount; stay -= combo; }
     var disc = 0; if (nights >= 14) disc = stay * P.twoWeeksDiscount; else if (nights >= 7) disc = stay * P.weekDiscount;
     var cleaning = B.site === "fresse" ? P.fresse.cleaning : entire ? P.chalet.cleaning : Math.min(P.chalet.cleaning, B.units.reduce(function (s, u) { return s + P.units[u].cleaning; }, 0));
-    var guests = Math.max(1, parseInt($("#guests").value, 10) || 1), linen = guests * P.linenPerPerson;
+    var guests = Math.max(1, guestsOverride || parseInt(($("#guests") || {}).value, 10) || 1), linen = guests * P.linenPerPerson;
     return { nights: nights, stay: stay + combo, combo: combo, disc: disc, cleaning: cleaning, linen: linen, total: stay - disc + cleaning + linen };
   }
 
   function validateSelection() {
     B.err = ""; B.errCode = "";
-    var g = parseInt($("#guests").value, 10) || 0;
+    var g = parseInt(($("#guests") || {}).value, 10) || 0;
     if (B.site === "bresse" && !B.units.length) { B.errCode = "units"; B.err = t("book.err.units"); return false; }
     if (B.arrive && B.depart) {
       var n = diffDays(B.arrive, B.depart), mn = minNights();
@@ -613,20 +613,69 @@
     $("#clearDates").addEventListener("click", function () { B.arrive = B.depart = null; renderCalendar(); updateEstimate(); });
     $("#guests").addEventListener("input", updateEstimate);
     $("#bookForm").addEventListener("submit", submitForm);
-    loadAvailability();
+  }
+
+  // --- API pour l'assistant : devis et disponibilités sans toucher au formulaire
+  function withState(req, fn) {
+    var save = { site: B.site, units: B.units, arrive: B.arrive, depart: B.depart };
+    B.site = req.site; B.units = req.site === "bresse" ? req.units : []; B.arrive = req.arrive; B.depart = req.depart;
+    try { return fn(); } finally { B.site = save.site; B.units = save.units; B.arrive = save.arrive; B.depart = save.depart; }
+  }
+  function quote(req) { // req : {site, units, arrive, depart, guests}
+    return withState(req, function () {
+      var nights = diffDays(req.arrive, req.depart), res = { nights: nights, today: todayISO() };
+      res.free = rangeFree(req.arrive, req.depart);
+      res.minNights = minNights(); res.tooShort = nights < res.minNights;
+      res.capacity = capacity(); res.overCap = !!req.guests && req.guests > res.capacity;
+      res.past = req.arrive < res.today;
+      res.banded = req.site === "fresse" || req.units.length === 4;
+      res.r = compute("season", req.guests || 1);
+      res.lo = res.banded ? compute("low", req.guests || 1) : null; res.hi = res.banded ? compute("high", req.guests || 1) : null;
+      res.alts = [];
+      if (!res.free) {
+        for (var k = 1; k <= 28 && res.alts.length < 2; k++) [k, -k].forEach(function (sh) {
+          if (res.alts.length >= 2) return;
+          var a = addDays(req.arrive, sh), d = addDays(req.depart, sh);
+          if (a >= res.today && rangeFree(a, d) && !res.alts.some(function (x) { return x[0] === a; })) res.alts.push([a, d]);
+        });
+      }
+      return res;
+    });
+  }
+  function busyIn(req, monthStart, monthEnd) { // périodes prises recoupant [monthStart, monthEnd)
+    return withState(Object.assign({ arrive: null, depart: null }, req), function () {
+      var out = [], cur = null;
+      for (var x = monthStart; x < monthEnd; x = addDays(x, 1)) {
+        if (nightBusy(x)) { if (!cur) cur = [x, addDays(x, 1)]; else cur[1] = addDays(x, 1); }
+        else if (cur) { out.push(cur); cur = null; }
+      }
+      if (cur) out.push(cur);
+      return out;
+    });
   }
 
   /* ------------------------------------------------------------------ */
-  window.BelmApp = { t: function (k, v) { return t(k, v); }, lang: function () { return lang; } };
+  window.BelmApp = {
+    t: function (k, v) { return t(k, v); }, lang: function () { return lang; },
+    quote: quote, busyIn: busyIn, money: function (n) { return money(n); }, fmtDate: fmtDate, today: todayISO, addDays: addDays, iso: iso, parse: parse
+  };
 
   document.addEventListener("DOMContentLoaded", function () {
-    initStatic(); initGallery(); initTour(); initGcal(); initBooking();
+    initStatic(); initGallery(); initTour(); initGcal(); initBooking(); loadAvailability();
     lang = detectLang();
     var qs = new URLSearchParams(location.search), wanted = qs.get("site");
     var site = (wanted === "bresse" || wanted === "fresse") ? wanted : "fresse";
     if ($("#bookForm")) { var r = $('input[name="site"][value="' + site + '"]'); if (r) r.checked = true; }
     setLang(lang, false);
     if ($("#gallery")) setGallerySite(site);
-    if ($("#bookForm")) onSiteChange();
+    if ($("#bookForm")) {
+      onSiteChange();
+      // Pré-remplissage depuis l'assistant : ?site=&units=m3,m4&from=AAAA-MM-JJ&to=AAAA-MM-JJ&guests=N
+      var re = /^\d{4}-\d{2}-\d{2}$/, u = (qs.get("units") || "").split(",").filter(function (x) { return UNIT_KEYS.indexOf(x) > -1; });
+      if (site === "bresse" && u.length) { B.units = u; syncUnitBoxes(); }
+      var g = parseInt(qs.get("guests"), 10); if (g > 0) $("#guests").value = g;
+      if (re.test(qs.get("from") || "") && re.test(qs.get("to") || "") && qs.get("to") > qs.get("from")) { B.arrive = qs.get("from"); B.depart = qs.get("to"); B.view = B.arrive.slice(0, 8) + "01"; }
+      renderCalendar(); updateEstimate();
+    }
   });
 })();
