@@ -6,6 +6,8 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "lastminute", kw: ["derniere minute", "last minute", "last-minute", "aujourd'hui", "ce soir", "demain", "une seule nuit", "1 nuit", "une nuit", "one night", "single night", "tonight", "tomorrow", "same day", "meme jour", "kurzfristig", "heute", "morgen", "eine nacht", "vandaag", "vannacht", "een nacht", "last minuut"] },
+    { id: "group",   kw: ["seminaire", "seminaires", "entreprise", "team building", "retreat", "seminar", "seminars", "corporate", "workshop", "tagung", "firmenevent", "bedrijfsuitje", "plusieurs logements", "plusieurs gites", "combiner", "combinaison", "several lodges", "combine", "combination", "mehrere wohnungen", "kombination", "kombinieren", "meerdere", "meerdere accommodaties", "samen boeken", "mehrere wohnungen buchen", "plusieurs logements ensemble"] },
     { id: "kitchen", kw: ["raclette", "fondue", "air fryer", "airfryer", "friteuse", "mixeur", "robot", "monsieur cuisine", "mister cuisine", "cafetiere", "bouilloire", "grille-pain", "materiel de cuisine", "ustensiles", "coffee machine", "coffee maker", "kettle", "toaster", "kitchenware", "kitchen equipment", "blender", "food processor", "kaffeemaschine", "wasserkocher", "kuchenausstattung", "kuchenmaschine", "koffiezetapparaat", "waterkoker", "broodrooster", "keukenmachine", "keukenapparatuur"] },
     { id: "transport", kw: ["train", "gare", "bus", "navette", "taxi", "transports", "transport en commun", "sans voiture", "public transport", "without a car", "bahn", "bahnhof", "zug", "ohne auto", "trein", "treinstation", "zonder auto", "openbaar vervoer", "comment venir", "comment arriver", "comment se rendre", "need a car", "need car", "voiture necessaire", "faut-il une voiture", "besoin d'une voiture", "en voiture", "by car", "how to get", "get there", "wie komme", "hoe kom", "autoreis", "mit dem auto", "met de auto"] },
     { id: "kids",    kw: ["securite", "dangereux", "danger", "enfants en bas age", "jeunes enfants", "petits enfants", "adapte aux enfants", "child safe", "safe for kids", "safe for children", "kid friendly", "child friendly", "family friendly", "sicherheit", "kindersicher", "kinderfreundlich", "gefahr", "veiligheid", "kindvriendelijk", "gevaarlijk", "securise", "securisee", "sur pour", "sicher fur", "veilig voor", "safe for"] },
@@ -293,7 +295,7 @@
     else if (id === "book" || id === "min") acts = [{ label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
     else if (id === "pool" || id === "cap") acts = [{ label: A.t("nav.gallery"), href: "photos.html", close: true }];
     else if (id === "direct") acts = [{ label: A.t("chat.bookBtn"), href: "reservation.html", close: true }];
-    else if (["pets", "pmr", "late", "baby", "cancel", "payment", "caution"].indexOf(id) > -1) acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
+    else if (["lastminute", "group", "pets", "pmr", "late", "baby", "cancel", "payment", "caution"].indexOf(id) > -1) acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "contact") acts = [{ label: A.t("chat.contact"), href: "mailto:" + C.contact.email }];
     else if (id === "where") acts = [{ label: A.t("nav.contact"), href: "contact.html", close: true }];
     var v = variants(id), txt;
