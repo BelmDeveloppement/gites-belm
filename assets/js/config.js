@@ -57,7 +57,7 @@ window.BELM = {
   // L'agenda doit être public. Laissez vide pour masquer. Le calendrier ne se charge qu'après un clic.
   googleCalendars: {
     fresse: "https://calendar.google.com/calendar/embed?src=lour8jvvokif4etaplgobnhmueq3u7ul%40import.calendar.google.com&ctz=Europe%2FParis",   // BEL'M Amiral — Fresse-sur-Moselle
-    bresse: "https://calendar.google.com/calendar/embed?src=140f3a12d62f29c35ba5adb8f84af404e1ad66889cf88024a9535f397f2f98fb%40group.calendar.google.com&ctz=Europe%2FParis"    // Chalet entier — La Bresse
+    bresse: "https://calendar.google.com/calendar/embed?src=dpq7rpcm3bkcssrfe1dter2mef0eg57g%40import.calendar.google.com&ctz=Europe%2FParis"    // Chalet entier — La Bresse
   },
 
   // ---- Assistant avancé (Botpress) déjà en place sur l'ancien site ----
