@@ -6,6 +6,7 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var INTENTS = [
+    { id: "beds",    kw: ["chambre", "chambres", "lit", "lits", "lit double", "lits doubles", "literie", "mezzanine", "couchage", "couchages", "bedroom", "bedrooms", "beds", "bed", "double bed", "sleeping", "schlafzimmer", "betten", "bett", "doppelbett", "slaapkamer", "slaapkamers", "bedden", "bed", "tweepersoonsbed"] },
     { id: "outdoor", kw: ["terrasse", "balcon", "jardin", "exterieur", "exterieurs", "four a bois", "four a pizza", "salon de jardin", "chaise longue", "chaises longues", "parasol", "transat", "terrace", "balcony", "garden", "outdoor", "outdoors", "patio", "bbq", "barbecue", "plancha", "garten", "balkon", "tuin", "terras", "liegestuhl", "sonnenschirm", "houtoven"] },
     { id: "tv",      kw: ["tv", "television", "tele", "netflix", "molotov", "chaine tv", "chaines tv", "chaines", "streaming", "fernseher", "fernsehen", "tv-sender", "televisie", "zenders"] },
     { id: "laundry", kw: ["lave-linge", "lave linge", "laverie", "machine a laver", "seche-linge", "seche linge", "washing machine", "laundry", "dryer", "washer", "waschmaschine", "trockner", "wasmachine", "droger", "wasserette"] },
