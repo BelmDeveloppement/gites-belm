@@ -1,0 +1,9 @@
+{
+  "_aide": "mode = busy : les évènements de l'agenda sont des réservations (indisponible) ; mode = free : les évènements sont les jours DISPONIBLES.",
+  "fresse": { "env": "ICAL_FRESSE",     "mode": "busy" },
+  "all":    { "env": "ICAL_BRESSE_ALL", "mode": "busy" },
+  "m1":     { "env": "ICAL_M1",         "mode": "busy" },
+  "m2":     { "env": "ICAL_M2",         "mode": "busy" },
+  "m3":     { "env": "ICAL_M3",         "mode": "busy" },
+  "m4":     { "env": "ICAL_M4",         "mode": "busy" }
+}

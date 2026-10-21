@@ -1,0 +1,40 @@
+name: Synchroniser les disponibilités
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # toutes les 3 heures
+  workflow_dispatch:          # bouton « Run workflow » dans l'onglet Actions
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Lire les agendas iCal
+        run: python scripts/sync_availability.py
+        env:
+          ICAL_FRESSE: ${{ secrets.ICAL_FRESSE }}
+          ICAL_BRESSE_ALL: ${{ secrets.ICAL_BRESSE_ALL }}
+          ICAL_M1: ${{ secrets.ICAL_M1 }}
+          ICAL_M2: ${{ secrets.ICAL_M2 }}
+          ICAL_M3: ${{ secrets.ICAL_M3 }}
+          ICAL_M4: ${{ secrets.ICAL_M4 }}
+      - name: Publier si quelque chose a changé
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "belm-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/availability.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Mise à jour automatique des disponibilités"
+            git push
+            gh api -X POST "repos/${{ github.repository }}/pages/builds" || true
+          fi

@@ -329,3 +329,15 @@ p { margin: 0 0 1em; }
 }
 .brand span { white-space: nowrap; }
 @media (max-width: 400px) { .lang select { max-width: 92px; } .brand span { font-size: 1rem; } }
+
+/* Google Agenda */
+.gcal { background: #fff; color: var(--ink); border-radius: 22px; padding: 22px 24px 24px; margin-bottom: 26px; }
+.gcal-tabs { margin-bottom: 14px; }
+.gcal-frame { position: relative; min-height: 120px; }
+.gcal-info { margin: 0 0 12px; color: var(--muted); }
+.gcal-iframe { width: 100%; height: 560px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.gcal-consent { margin: 10px 0 0; }
+@media (max-width: 640px) { .gcal { padding: 16px; } .gcal-iframe { height: 480px; } }
+
+/* L attribut hidden doit toujours l emporter sur les display des composants */
+[hidden] { display: none !important; }

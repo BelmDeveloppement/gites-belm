@@ -32,6 +32,7 @@
       <a href="#photos" data-i18n="nav.gallery">Photos</a>
       <a href="#visite" data-i18n="nav.tour">Visite virtuelle</a>
       <a href="#tarifs" data-i18n="nav.rates">Tarifs</a>
+      <a href="#reserver" data-i18n="nav.avail">Disponibilités</a>
       <a href="#contact" data-i18n="nav.contact">Contact</a>
     </nav>
     <div class="actions">
@@ -209,6 +210,14 @@
   <section class="section book" id="reserver">
     <div class="wrap">
       <header class="sec-head light"><p class="eyebrow" data-i18n="book.eyebrow">Réservation</p><h2 data-i18n="book.title"></h2><p data-i18n="book.sub"></p></header>
+      <div class="gcal" id="gcal" hidden>
+        <div class="tabs gcal-tabs" id="gcalTabs" role="tablist"></div>
+        <div class="gcal-frame" id="gcalFrame">
+          <p class="gcal-info" id="gcalInfo"></p>
+          <button type="button" class="btn btn-primary" id="gcalLoad"></button>
+          <p class="small gcal-consent" data-i18n="gcal.consent"></p>
+        </div>
+      </div>
       <form class="book-grid" id="bookForm" novalidate>
         <div class="book-main">
           <fieldset class="step">

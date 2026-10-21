@@ -44,7 +44,7 @@
     lang = l;
     if (persist) { try { localStorage.setItem("belm-lang", l); } catch (e) {} }
     applyI18n();
-    renderRates(); renderGalleryChips(); renderGallery(); renderTour();
+    renderRates(); renderGalleryChips(); renderGallery(); renderTour(); renderGcal();
     renderCalendar(); updateEstimate(); updateFormMsgs();
     document.dispatchEvent(new CustomEvent("belm:lang", { detail: { lang: lang } }));
   }
@@ -339,6 +339,41 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Google Agenda (chargé uniquement après un clic)                     */
+  /* ------------------------------------------------------------------ */
+  var gcal = { site: "fresse", loaded: {} };
+  function gcalUrl(site) {
+    var raw = (C.googleCalendars || {})[site]; if (!raw) return "";
+    try { var u = new URL(raw); if (u.hostname !== "calendar.google.com") return ""; u.searchParams.set("hl", lang); u.searchParams.set("ctz", "Europe/Paris"); return u.toString(); } catch (e) { return ""; }
+  }
+  function renderGcal() {
+    var box = $("#gcal"); if (!box) return;
+    var sites = ["fresse", "bresse"].filter(function (k) { return gcalUrl(k); });
+    box.hidden = !sites.length; if (!sites.length) return;
+    if (sites.indexOf(gcal.site) < 0) gcal.site = sites[0];
+    var tabs = $("#gcalTabs"); tabs.innerHTML = "";
+    sites.forEach(function (k) {
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab");
+      b.className = "tab" + (gcal.site === k ? " is-on" : ""); b.setAttribute("aria-selected", gcal.site === k ? "true" : "false"); b.textContent = t("gcal." + k);
+      b.addEventListener("click", function () { gcal.site = k; renderGcal(); });
+      tabs.appendChild(b);
+    });
+    var frame = $("#gcalFrame"), old = $("iframe", frame); if (old) old.remove();
+    var info = $("#gcalInfo"), btn = $("#gcalLoad"), consent = $(".gcal-consent", frame);
+    info.textContent = t("gcal.info." + gcal.site); btn.textContent = t("gcal.load");
+    var loaded = !!gcal.loaded[gcal.site];
+    btn.hidden = loaded; consent.hidden = loaded;
+    if (loaded) {
+      var f = document.createElement("iframe"); f.className = "gcal-iframe"; f.title = t("gcal.title"); f.loading = "lazy";
+      f.src = gcalUrl(gcal.site); frame.appendChild(f);
+    }
+  }
+  function initGcal() {
+    var btn = $("#gcalLoad"); if (!btn) return;
+    btn.addEventListener("click", function () { gcal.loaded[gcal.site] = true; renderGcal(); });
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Réservation                                                         */
   /* ------------------------------------------------------------------ */
   var UNIT_KEYS = ["m1", "m2", "m3", "m4"];
@@ -592,7 +627,7 @@
   window.BelmApp = { t: function (k, v) { return t(k, v); }, lang: function () { return lang; } };
 
   document.addEventListener("DOMContentLoaded", function () {
-    initStatic(); initGallery(); initTour(); initBooking();
+    initStatic(); initGallery(); initTour(); initGcal(); initBooking();
     lang = detectLang();
     setLang(lang, false);
     setGallerySite("fresse");

@@ -30,11 +30,24 @@ Tout se règle dans **`assets/js/config.js`** :
    les tarifs « de… à… » de l'ancien site sont modélisés par saison (480 / 600 / 800 € et 350 / 420 / 500 €) : modifiez-les à votre convenance.
 6. **Pages légales** : les liens pointent encore vers l'ancien site Jimdo. Gardez-le actif ou recréez ces pages avant de le supprimer.
 
-## Mettre à jour les disponibilités
+## Calendriers et disponibilités
 
-Éditez **`data/availability.json`** : une ligne par période `["2026-12-20", "2026-12-27"]` (nuits du 20 au 26 incluses).
-Clés : `fresse`, `m1`, `m2`, `m3`, `m4`, `all` (bloque tout La Bresse). Ce fichier est conçu pour être alimenté plus tard
-automatiquement (export iCal Airbnb / Google Agenda → JSON), par exemple via votre projet « Gestion des réservations ».
+Trois niveaux, au choix :
+
+1. **Afficher vos Google Agenda comme sur l'ancien site** — dans `assets/js/config.js`, remplissez `googleCalendars`
+   (`fresse` et `bresse`) avec l'adresse d'intégration (Google Agenda → Paramètres de l'agenda → « Intégrer l'agenda » →
+   l'adresse `https://calendar.google.com/calendar/embed?src=…`). L'agenda doit être public. Il ne se charge qu'après un clic.
+2. **Alimenter automatiquement le calendrier de réservation** — une GitHub Action (`.github/workflows/sync-availability.yml`)
+   lit vos agendas au format iCal toutes les 3 heures et met à jour `data/availability.json`.
+   Ajoutez les adresses iCal comme *secrets* du dépôt (Settings → Secrets and variables → Actions) :
+   `ICAL_FRESSE`, `ICAL_BRESSE_ALL`, `ICAL_M1`, `ICAL_M2`, `ICAL_M3`, `ICAL_M4` (seules celles que vous renseignez sont utilisées).
+   - Google Agenda : « Adresse secrète au format iCal » dans les paramètres de l'agenda.
+   - Airbnb : *Calendrier → Disponibilité → Synchroniser les calendriers → Exporter le calendrier* (un lien par annonce).
+   - Dans `scripts/sources.json`, `busy` = les évènements sont des **réservations** ; `free` = les évènements sont les **jours disponibles**
+     (c'était peut-être le cas de vos agendas Jimdo).
+   - Pour lancer tout de suite : onglet **Actions → Synchroniser les disponibilités → Run workflow**.
+3. **À la main** — éditez `data/availability.json` : une ligne par période `["2026-12-20", "2026-12-27"]`
+   (nuits du 20 au 26 incluses). Clés : `fresse`, `m1`, `m2`, `m3`, `m4`, `all` (bloque tout La Bresse).
 
 ## Mise en ligne avec GitHub Pages
 
@@ -64,7 +77,9 @@ assets/js/config.js        ★ réglages (contact, vidéo, tarifs, saisons, phot
 assets/js/i18n.js          textes FR / EN / DE / NL
 assets/js/main.js          langue, galeries, visite, réservation
 assets/js/chatbot.js       assistant FAQ
-data/availability.json     périodes indisponibles
+data/availability.json     périodes indisponibles (mis à jour automatiquement si les agendas sont reliés)
+scripts/                   synchronisation iCal → disponibilités
+.github/workflows/         tâche planifiée de synchronisation
 photos/                    vos images
 ```
 

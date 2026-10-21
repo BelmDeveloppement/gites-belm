@@ -51,6 +51,15 @@ window.BELM = {
     { id: "piscine",  t: 406, zone: "detente", img: "photos/fresse/visite/17-piscine.jpg" }
   ],
 
+  // ---- Google Agenda affichés dans la rubrique Réservation (comme sur l'ancien site) ----
+  // Dans Google Agenda : Paramètres de l'agenda → « Intégrer l'agenda » → copiez l'adresse qui figure
+  // dans src="…" du code d'intégration (elle commence par https://calendar.google.com/calendar/embed?src=…).
+  // L'agenda doit être public. Laissez vide pour masquer. Le calendrier ne se charge qu'après un clic.
+  googleCalendars: {
+    fresse: "",   // BEL'M Amiral — Fresse-sur-Moselle
+    bresse: ""    // Chalet entier — La Bresse
+  },
+
   // ---- Assistant avancé (Botpress) déjà en place sur l'ancien site ----
   botpressUrl: "https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https%3A%2F%2Ffiles.bpcontent.cloud%2F2026%2F03%2F08%2F11%2F20260308112739-RJO92E4A.json",
 
