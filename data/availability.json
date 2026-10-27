@@ -2,7 +2,7 @@
   "_aide": "Chaque période est [arrivée, départ] : les nuits de l'arrivée (incluse) au départ (exclu) sont indisponibles. Format AAAA-MM-JJ. Clés : fresse, m1, m2, m3, m4 (un logement de La Bresse), all (bloque tout La Bresse).",
   "fresse": [
     [
-      "2026-10-23",
+      "2026-10-25",
       "2026-11-02"
     ],
     [
@@ -134,8 +134,8 @@
       "2027-10-10"
     ],
     [
-      "2027-10-26",
-      "2027-10-27"
+      "2027-10-27",
+      "2027-10-28"
     ]
   ],
   "m1": [],
@@ -228,8 +228,8 @@
       "2027-08-30"
     ],
     [
-      "2027-10-26",
-      "2027-10-27"
+      "2027-10-27",
+      "2027-10-28"
     ]
   ]
 }
